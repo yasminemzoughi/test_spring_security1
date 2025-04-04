@@ -1,0 +1,64 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 50MB
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/springtestDB?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: root
+    password: # provide password here if necessary
+
+  jpa:
+    hibernate:
+      ddl-auto: update # Change to 'update' if you want to update schema automatically
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  application:
+    name: user
+
+  security:
+    jwt:
+      secret-key: "896A25522749A"
+      expiration: 86400000  # 24 hours in milliseconds
+
+  mailing:
+    frontend:
+      activation-url: "http://localhost:4200/activate-account"
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: yasminemzoughi4@gmail.com
+    password: "byzs pdhq kyil whiu"  # Added quotes for special characters
+    properties:
+      mail.smtp:
+        auth: true
+        starttls:
+          enable: true
+        connectiontimeout: 5000
+        timeout: 3000
+        writetimeout: 5000
+
+springdoc:
+  default-produces-type: application/json
+  cloud:
+    discovery:
+      enabled: false  # Disable service discovery
+
+eureka:
+  client:
+    enabled: false  # Disable Eureka client specifically
+logging:
+  level:
+    org.springframework.web: DEBUG  # Logs HTTP request/response details
+    org.springframework.validation: DEBUG  # Logs validation errors
+    tn.esprit: DEBUG  # Logs from your application packages
