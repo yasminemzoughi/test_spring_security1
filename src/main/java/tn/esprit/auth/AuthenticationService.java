@@ -38,9 +38,9 @@ public class AuthenticationService {
     @Value("${spring.mailing.frontend.activation-url}")
     private String activationUrl;
     public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
+      /*  var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
                 .orElseThrow(() -> new IllegalStateException("PET_OWNER role not found"));
-
+       */
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -49,7 +49,7 @@ public class AuthenticationService {
                 .accountLocked(false)
                 .enabled(false)
                 .build();
-        user.getRoles().add(userRole);
+       // user.getRoles().add(userRole);
         userRepository.save(user);
 
         // Comment out for testing:
