@@ -22,6 +22,7 @@ import tn.esprit.security.JwtService;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 
 
 @Service
@@ -38,9 +39,8 @@ public class AuthenticationService {
     @Value("${spring.mailing.frontend.activation-url}")
     private String activationUrl;
     public void register(RegistrationRequest request) throws MessagingException {
-      /*  var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
+        var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
                 .orElseThrow(() -> new IllegalStateException("PET_OWNER role not found"));
-       */
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -48,12 +48,13 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .accountLocked(false)
                 .enabled(false)
+                .roles(new HashSet<>())
                 .build();
-       // user.getRoles().add(userRole);
+       user.getRoles().add(userRole);
         userRepository.save(user);
+        System.out.println("User created with ID: " + user.getId()); // Debug log
 
-        // Comment out for testing:
-        // sendValidationEmail(user);
+        sendValidationEmail(user);
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -109,13 +110,14 @@ public class AuthenticationService {
 
     private void sendValidationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
+        System.out.println("Generated token: " + newToken + " for user: " + user.getEmail()); // Debug log
+
         emailService.sendEmail(
                 user.getEmail(),
                 user.getFullName(),
-           //     EmailTemplateName.ACTIVATE_ACCOUNT,
                 activationUrl,
                 newToken,
-                "Account activation"
+                "Account Activation"
         );
     }
 

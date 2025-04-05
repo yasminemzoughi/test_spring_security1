@@ -27,7 +27,7 @@ spring:
 
   security:
     jwt:
-      secret-key: "896A25522749A"
+      secret-key: "dGhpcy1pcy1hLXN1cGVyLXNlY3VyZS1zZWNyZXQta2V5LTI1Ng=="
       expiration: 86400000  # 24 hours in milliseconds
 
   mailing:
@@ -38,15 +38,18 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: yasminemzoughi4@gmail.com
-    password: "byzs pdhq kyil whiu"  # Added quotes for special characters
+    password: "byzs pdhq kyil whiu"
+    admin:
+      email: yasminemzoughi4@gmail.com
     properties:
       mail.smtp:
         auth: true
         starttls:
           enable: true
-        connectiontimeout: 5000
-        timeout: 3000
-        writetimeout: 5000
+      connectiontimeout: 5000  # 5 seconds
+      timeout: 5000           # 5 seconds
+      writetimeout: 5000      # 5 seconds
+
 
 springdoc:
   default-produces-type: application/json

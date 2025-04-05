@@ -18,22 +18,10 @@ import java.util.stream.Collectors;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
- /* @PostMapping("/register")
-    public ResponseEntity<?> register(
-            @RequestBody @Valid RegistrationRequest request
-    ) throws MessagingException {
-        try {
-            authenticationService.register(request);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-  */
  @PostMapping("/register")
  public ResponseEntity<?> register(
          @RequestBody @Valid RegistrationRequest request,
-         BindingResult bindingResult  // Add this parameter
+         BindingResult bindingResult
  ) throws MessagingException {
      if (bindingResult.hasErrors()) {
          // Return validation errors
@@ -42,7 +30,6 @@ public class AuthenticationController {
                  .collect(Collectors.joining(", "));
          return ResponseEntity.badRequest().body(errorMessage);
      }
-
      try {
          authenticationService.register(request);
          return ResponseEntity.ok().build();
@@ -51,12 +38,20 @@ public class AuthenticationController {
      }
  }
 
-
-    @PostMapping("/authenticate")
+    @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody @Valid AuthenticationRequest request
     ) {
-        return ResponseEntity.ok(authenticationService.authenticate(request));
+        try {
+            System.out.println("Attempting to authenticate: " + request.getEmail());
+            var response = authenticationService.authenticate(request);
+            System.out.println("Authentication successful for: " + request.getEmail());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Authentication failed: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     @GetMapping("/activate-account")
     public  ResponseEntity<?>  confirm(

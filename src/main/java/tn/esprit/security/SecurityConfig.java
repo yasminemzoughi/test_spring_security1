@@ -38,13 +38,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                        .requestMatchers(  // Public endpoints that don't require authentication
                                 "/auth/register",
                                 "/auth/login",
+                                "/auth/activate-account",
                                 "/v3/api-docs/**",
-                                "/swagger-ui/**",
                                 "/error"
-                        ).permitAll()
+                        ).permitAll() // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
