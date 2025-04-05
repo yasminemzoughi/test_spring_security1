@@ -1,34 +1,37 @@
-server:
-  port: 8082
-  servlet:
-    context-path: /api
-
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  main:
+    allow-bean-definition-overriding: true
+
   profiles:
     active: dev
+
   servlet:
     multipart:
       max-file-size: 50MB
 
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/springtestDB?createDatabaseIfNotExist=true&serverTimezone=UTC
-    username: root
-    password: # provide password here if necessary
-
-  jpa:
-    hibernate:
-      ddl-auto: update # Change to 'update' if you want to update schema automatically
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
   application:
     name: user
 
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/spring_user_DB?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: root
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
   security:
     jwt:
-      secret-key: "dGhpcy1pcy1hLXN1cGVyLXNlY3VyZS1zZWNyZXQta2V5LTI1Ng=="
-      expiration: 86400000  # 24 hours in milliseconds
+      secret-key: ${JWT_SECRET_KEY}
+      expiration: 86400000
 
   mailing:
     frontend:
@@ -37,31 +40,40 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: yasminemzoughi4@gmail.com
-    password: "byzs pdhq kyil whiu"
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     admin:
-      email: yasminemzoughi4@gmail.com
+      email: ${MAIL_ADMIN}
     properties:
       mail.smtp:
         auth: true
         starttls:
           enable: true
-      connectiontimeout: 5000  # 5 seconds
-      timeout: 5000           # 5 seconds
-      writetimeout: 5000      # 5 seconds
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
 
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    enabled: true
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api
 
 springdoc:
   default-produces-type: application/json
   cloud:
     discovery:
-      enabled: false  # Disable service discovery
+      enabled: false
 
-eureka:
-  client:
-    enabled: false  # Disable Eureka client specifically
 logging:
   level:
-    org.springframework.web: DEBUG  # Logs HTTP request/response details
-    org.springframework.validation: DEBUG  # Logs validation errors
-    tn.esprit: DEBUG  # Logs from your application packages
+    org.springframework.web: DEBUG
+    org.springframework.validation: DEBUG

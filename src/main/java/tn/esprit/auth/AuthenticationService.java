@@ -1,6 +1,7 @@
 package tn.esprit.auth;
 
 import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +39,8 @@ public class AuthenticationService {
 
     @Value("${spring.mailing.frontend.activation-url}")
     private String activationUrl;
+    @Transactional
+
     public void register(RegistrationRequest request) throws MessagingException {
         var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
                 .orElseThrow(() -> new IllegalStateException("PET_OWNER role not found"));

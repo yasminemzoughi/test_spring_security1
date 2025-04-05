@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+# Environment files
+.env
+.env.*
+!.env.example  # Optional: Keep a template file for reference
