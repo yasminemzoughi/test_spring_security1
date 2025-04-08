@@ -8,7 +8,7 @@ import tn.esprit.entity.Role;
 import tn.esprit.entity.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
-import tn.esprit.backend_pi.service.IUserService;
+import tn.esprit.service.IUserService;
 import java.util.*;
 
 @RestController

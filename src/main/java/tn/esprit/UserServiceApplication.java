@@ -59,11 +59,12 @@ public class UserServiceApplication {
     private void initializeRoles(RoleRepository roleRepository) {
         Arrays.stream(RoleEnum.values()).forEach(roleEnum -> {
             if (!roleRepository.existsByName(roleEnum)) {
-                Role role = new Role();
-                role.setName(roleEnum);
-                // Add permissions from the enum
-                role.setPermissions(new HashSet<>(roleEnum.getPermissions()));
-                roleRepository.saveAndFlush(role);
+                Role role = Role.builder()
+                        .name(roleEnum)
+                        .permissions(new HashSet<>(roleEnum.getPermissions()))
+                        .build();
+
+                roleRepository.save(role);
                 log.info("Created role: {} with permissions: {}",
                         roleEnum.name(), roleEnum.getPermissions());
             }

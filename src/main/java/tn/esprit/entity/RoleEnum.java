@@ -1,5 +1,6 @@
 package tn.esprit.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -52,5 +53,15 @@ public enum RoleEnum {
                 .collect(Collectors.toList());
         authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
         return authorities;
+    }
+
+    @JsonCreator
+    public static RoleEnum fromString(String value) {
+        try {
+            return RoleEnum.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // Handle invalid role values (return null or default role)
+            return null; // or return RoleEnum.USER;
+        }
     }
 }

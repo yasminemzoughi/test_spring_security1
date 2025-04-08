@@ -12,7 +12,7 @@ import tn.esprit.repository.UserRepository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import tn.esprit.backend_pi.service.IUserService;
+import tn.esprit.service.IUserService;
 @NoArgsConstructor
 @AllArgsConstructor
 @Service

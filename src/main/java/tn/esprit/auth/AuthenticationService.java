@@ -14,6 +14,7 @@ import tn.esprit.dto.AuthenticationRequest;
 import tn.esprit.dto.AuthenticationResponse;
 import tn.esprit.dto.RegistrationRequest;
 import tn.esprit.email.EmailService;
+import tn.esprit.entity.Role;
 import tn.esprit.entity.RoleEnum;
 import tn.esprit.entity.Token;
 import tn.esprit.entity.User;
@@ -41,7 +42,7 @@ public class AuthenticationService {
 
     @Value("${spring.mailing.frontend.activation-url}")
     private String activationUrl;
-    @Transactional
+
 
             /* public void register(RegistrationRequest request) throws MessagingException {
         var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
@@ -62,13 +63,18 @@ public class AuthenticationService {
         sendValidationEmail(user);
     }
              */
+    @Transactional
     public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName(request.getRoleEnum())
-                .orElseThrow(() -> new IllegalStateException("ROLE_" + request.getRoleEnum() + " not found"));
-
+        // Check if email exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already in use");
         }
+
+        // Get the role from repository
+        Role userRole = roleRepository.findByName(request.getRole())
+                .orElseThrow(() -> new IllegalStateException("Role " + request.getRole() + " not found"));
+
+        // Create user
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -79,10 +85,14 @@ public class AuthenticationService {
                 .roles(new HashSet<>())
                 .build();
 
+        // Assign role
         user.getRoles().add(userRole);
+
+        // Save user
         userRepository.save(user);
         log.info("User created with ID: {}", user.getId());
 
+        // Send activation email
         sendValidationEmail(user);
     }
 

@@ -54,10 +54,14 @@ public class AuthenticationController {
         }
     }
     @GetMapping("/activate-account")
-    public  ResponseEntity<?>  confirm(
+    public ResponseEntity<?> confirm(
             @RequestParam String token
     ) throws MessagingException {
-        authenticationService.activateAccount(token);
-        return ResponseEntity.ok().build();
+        try {
+            authenticationService.activateAccount(token);
+            return ResponseEntity.ok().body("Account activated successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
