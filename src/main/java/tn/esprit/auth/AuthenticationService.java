@@ -3,6 +3,7 @@ package tn.esprit.auth;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +26,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 
+@Slf4j // Add Lombok logger
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class AuthenticationService {
     private String activationUrl;
     @Transactional
 
-    public void register(RegistrationRequest request) throws MessagingException {
+            /* public void register(RegistrationRequest request) throws MessagingException {
         var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
                 .orElseThrow(() -> new IllegalStateException("PET_OWNER role not found"));
         var user = User.builder()
@@ -56,6 +58,30 @@ public class AuthenticationService {
        user.getRoles().add(userRole);
         userRepository.save(user);
         System.out.println("User created with ID: " + user.getId()); // Debug log
+
+        sendValidationEmail(user);
+    }
+             */
+    public void register(RegistrationRequest request) throws MessagingException {
+        var userRole = roleRepository.findByName(request.getRoleEnum())
+                .orElseThrow(() -> new IllegalStateException("ROLE_" + request.getRoleEnum() + " not found"));
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+        var user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail().toLowerCase())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .accountLocked(false)
+                .enabled(false)
+                .roles(new HashSet<>())
+                .build();
+
+        user.getRoles().add(userRole);
+        userRepository.save(user);
+        log.info("User created with ID: {}", user.getId());
 
         sendValidationEmail(user);
     }
@@ -111,7 +137,7 @@ public class AuthenticationService {
         return generatedToken;
     }
 
-    private void sendValidationEmail(User user) throws MessagingException {
+  /*  private void sendValidationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
         System.out.println("Generated token: " + newToken + " for user: " + user.getEmail()); // Debug log
 
@@ -123,7 +149,28 @@ public class AuthenticationService {
                 "Account Activation"
         );
     }
+   */
+  private void sendValidationEmail(User user) throws MessagingException {
+      try {
+          var newToken = generateAndSaveActivationToken(user);
+          log.info("Generated token for user {}: {}", user.getEmail(), newToken);
 
+          emailService.sendEmail(
+                  user.getEmail(),
+                  user.getFullName(),
+                  activationUrl,
+                  newToken,
+                  "Account Activation"
+          );
+      } catch (MessagingException e) {
+          log.error("Failed to send activation email to {}", user.getEmail(), e);
+          throw new EmailSendingException("Failed to send activation email");
+      }
+  }public static class EmailSendingException extends RuntimeException {
+        public EmailSendingException(String message) {
+            super(message);
+        }
+    }
     private String generateActivationCode(int length) {
         String characters = "0123456789";
         StringBuilder codeBuilder = new StringBuilder();
@@ -134,4 +181,29 @@ public class AuthenticationService {
         }
         return codeBuilder.toString();
     }
+
+
+    @Transactional
+    public User createAdminUser(String firstName, String lastName, String email, String password) {
+        var adminRole = roleRepository.findByName(RoleEnum.ADMIN)
+                .orElseThrow(() -> new IllegalStateException("ADMIN role not found"));
+
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        var user = User.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email.toLowerCase())
+                .password(passwordEncoder.encode(password))
+                .accountLocked(false)
+                .enabled(true)
+                .roles(new HashSet<>())
+                .build();
+
+        user.getRoles().add(adminRole);
+        return userRepository.save(user);
+    }
+
 }

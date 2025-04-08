@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import tn.esprit.entity.Role;
@@ -14,6 +15,7 @@ import tn.esprit.entity.User;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,6 +28,9 @@ public class JwtService {
 
     @Value("${spring.security.jwt.expiration}")
     private long jwtExpiration;
+    public Claims getAllClaims(String token) {
+        return extractAllClaims(token);
+    }
 
 
     public String extractUsername(String token) {
@@ -46,21 +51,49 @@ public class JwtService {
                 .getBody();
     }
 
+    /*
+      public String generateToken(User user) {
+          Map<String, Object> claims = new HashMap<>();
+          claims.put("roles", user.getRoles().stream()
+                  .map(Role::getName)
+                  .collect(Collectors.toList()));
+          return buildToken(claims, user);
+      }
+
+      private String buildToken(Map<String, Object> extraClaims, User user) {
+          return Jwts.builder()
+                  .setClaims(extraClaims)
+                  .setSubject(user.getEmail()) // Using email as username
+                  .setIssuedAt(new Date(System.currentTimeMillis()))
+                  .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                  .claim("authorities", user.getAuthorities())
+                  .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                  .compact();
+      }*/
     public String generateToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toList()));
-        return buildToken(claims, user);
+        List<String> authorities = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("authorities", authorities)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
+
+
+
 
     private String buildToken(Map<String, Object> extraClaims, User user) {
         return Jwts.builder()
                 .setClaims(extraClaims)
-                .setSubject(user.getEmail()) // Using email as username
+                .setSubject(user.getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .claim("authorities", user.getAuthorities())
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

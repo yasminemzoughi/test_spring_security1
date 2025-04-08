@@ -30,10 +30,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // List of public endpoints that don't require JWT authentication
     private static final List<String> WHITELIST = List.of(
-            "/auth/register",       // User registration endpoint
-            "/auth/login",           // User login endpoint
-            "/auth/authenticate",    // Authentication endpoint
-            "/auth/activate-account" // Account activation endpoint
+            "/auth/**",
+            "/api/auth/**"
     );
 
     @Override

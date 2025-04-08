@@ -5,6 +5,9 @@ import lombok.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import tn.esprit.entity.Role;
+import tn.esprit.entity.RoleEnum;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -25,5 +28,8 @@ public class RegistrationRequest {
     @NotNull(message = "Password is mandatory")
     @Size(min = 8, message = "Password should be 8 characters long minimum")
     private String password;
+    @NotNull(message = "Role is mandatory")
+    private RoleEnum roleEnum;
+    private Role role;
 
 }

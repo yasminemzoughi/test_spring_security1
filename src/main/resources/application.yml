@@ -1,12 +1,8 @@
 spring:
-  config:
-    import: optional:file:.env[.properties]
-
-  main:
-    allow-bean-definition-overriding: true
-
   profiles:
     active: dev
+  main:
+    allow-bean-definition-overriding: true
 
   servlet:
     multipart:
@@ -17,9 +13,9 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/spring_user_DB?createDatabaseIfNotExist=true&serverTimezone=UTC
-    username: root
-    password:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   jpa:
     hibernate:
@@ -30,42 +26,44 @@ spring:
 
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
-      expiration: 86400000
+      secret-key: ${SPRING_SECURITY_JWT_SECRET_KEY}
+      expiration: ${SPRING_SECURITY_JWT_EXPIRATION}
 
   mailing:
     frontend:
-      activation-url: "http://localhost:4200/activate-account"
+      activation-url: ${SPRING_MAILING_FRONTEND_ACTIVATION_URL}
 
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: ${SPRING_MAIL_HOST}
+    port: ${SPRING_MAIL_PORT}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     admin:
-      email: ${MAIL_ADMIN}
+      email: ${SPRING_MAIL_ADMIN_EMAIL}
     properties:
       mail.smtp:
-        auth: true
+        auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
         starttls:
-          enable: true
-        connectiontimeout: 5000
-        timeout: 5000
-        writetimeout: 5000
+          enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
+        connectiontimeout: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT}
+        timeout: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT}
+        writetimeout: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT}
 
+app:
+  admin:
+    email: ${APP_ADMIN_EMAIL}
+    password: ${APP_ADMIN_PASSWORD}
 
 eureka:
   instance:
     hostname: localhost
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
     enabled: true
 
 server:
   port: 8081
-  servlet:
-    context-path: /api
 
 springdoc:
   default-produces-type: application/json

@@ -38,13 +38,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(  // Public endpoints that don't require authentication
-                                "/auth/register",
-                                "/auth/login",
-                                "/auth/activate-account",
-                                "/v3/api-docs/**",
-                                "/error"
-                        ).permitAll() // All other requests require authentication
+                        .requestMatchers(
+                                "/auth/**",
+                                "/api/auth/**" // Keep both for safety
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
