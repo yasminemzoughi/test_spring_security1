@@ -4,7 +4,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import tn.esprit.dto.AuthenticationRequest;
@@ -54,35 +56,39 @@ public class AuthenticationService {
         user.getRoles().add(role);
         userRepository.save(user);
     }
-    @Transactional
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            var user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow();
 
-        var jwtToken = jwtService.generateToken(new HashMap<>(), user);
+            var jwtToken = jwtService.generateToken(user);
 
-        // 👇 Save the token to the database
-        Token token = Token.builder()
-                .token(jwtToken)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusHours(24))
-                .user(user)
-                .build();
+            // Save token to database
+            Token token = Token.builder()
+                    .token(jwtToken)
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusHours(24)) // Set your desired expiration
+                    .revoked(false)
+                    .user(user)
+                    .build();
+            tokenRepository.save(token);
 
-        tokenRepository.save(token);
-
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+            return AuthenticationResponse.builder()
+                    .token(jwtToken)
+                    .build();
+        } catch (AuthenticationException e) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
     }
+
     public void logout(String token) {
         Token storedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token not found"));
