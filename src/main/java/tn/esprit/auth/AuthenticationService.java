@@ -44,25 +44,6 @@ public class AuthenticationService {
     private String activationUrl;
 
 
-            /* public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName(RoleEnum.PET_OWNER)
-                .orElseThrow(() -> new IllegalStateException("PET_OWNER role not found"));
-        var user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .accountLocked(false)
-                .enabled(false)
-                .roles(new HashSet<>())
-                .build();
-       user.getRoles().add(userRole);
-        userRepository.save(user);
-        System.out.println("User created with ID: " + user.getId()); // Debug log
-
-        sendValidationEmail(user);
-    }
-             */
     @Transactional
     public void register(RegistrationRequest request) throws MessagingException {
         // Check if email exists
@@ -147,36 +128,23 @@ public class AuthenticationService {
         return generatedToken;
     }
 
-  /*  private void sendValidationEmail(User user) throws MessagingException {
-        var newToken = generateAndSaveActivationToken(user);
-        System.out.println("Generated token: " + newToken + " for user: " + user.getEmail()); // Debug log
+    private void sendValidationEmail(User user) throws MessagingException {
+        try {
+            var newToken = generateAndSaveActivationToken(user);
+            log.info("Generated token for user {}: {}", user.getEmail(), newToken);
 
-        emailService.sendEmail(
-                user.getEmail(),
-                user.getFullName(),
-                activationUrl,
-                newToken,
-                "Account Activation"
-        );
-    }
-   */
-  private void sendValidationEmail(User user) throws MessagingException {
-      try {
-          var newToken = generateAndSaveActivationToken(user);
-          log.info("Generated token for user {}: {}", user.getEmail(), newToken);
-
-          emailService.sendEmail(
-                  user.getEmail(),
-                  user.getFullName(),
-                  activationUrl,
-                  newToken,
-                  "Account Activation"
-          );
-      } catch (MessagingException e) {
-          log.error("Failed to send activation email to {}", user.getEmail(), e);
-          throw new EmailSendingException("Failed to send activation email");
-      }
-  }public static class EmailSendingException extends RuntimeException {
+            emailService.sendEmail(
+                    user.getEmail(),
+                    user.getFullName(),
+                    activationUrl,
+                    newToken,
+                    "Account Activation"
+            );
+        } catch (MessagingException e) {
+            log.error("Failed to send activation email to {}", user.getEmail(), e);
+            throw new EmailSendingException("Failed to send activation email");
+        }
+    }public static class EmailSendingException extends RuntimeException {
         public EmailSendingException(String message) {
             super(message);
         }

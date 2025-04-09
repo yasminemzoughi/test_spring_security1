@@ -18,25 +18,25 @@ import java.util.stream.Collectors;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
- @PostMapping("/register")
- public ResponseEntity<?> register(
-         @RequestBody @Valid RegistrationRequest request,
-         BindingResult bindingResult
- ) throws MessagingException {
-     if (bindingResult.hasErrors()) {
-         // Return validation errors
-         String errorMessage = bindingResult.getAllErrors().stream()
-                 .map(error -> error.getDefaultMessage())
-                 .collect(Collectors.joining(", "));
-         return ResponseEntity.badRequest().body(errorMessage);
-     }
-     try {
-         authenticationService.register(request);
-         return ResponseEntity.ok().build();
-     } catch (Exception e) {
-         return ResponseEntity.badRequest().body(e.getMessage());
-     }
- }
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
+            @RequestBody @Valid RegistrationRequest request,
+            BindingResult bindingResult
+    ) throws MessagingException {
+        if (bindingResult.hasErrors()) {
+            // Return validation errors
+            String errorMessage = bindingResult.getAllErrors().stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+        try {
+            authenticationService.register(request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
