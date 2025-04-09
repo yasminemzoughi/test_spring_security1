@@ -2,6 +2,8 @@ package tn.esprit.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.FetchMode;
+import org.hibernate.annotations.Fetch;
 import tn.esprit.entity.Permission;
 
 import java.util.HashSet;
@@ -20,6 +22,7 @@ public class Role {
 
     @Enumerated(EnumType.STRING)
     private RoleEnum name;
+
 
     @ElementCollection(targetClass = Permission.class)
     @CollectionTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"))

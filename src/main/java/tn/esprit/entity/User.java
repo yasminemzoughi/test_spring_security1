@@ -23,7 +23,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    private boolean enabled = false;
+    private boolean enabled = true;
     private boolean accountLocked = false;
 
     @ManyToMany(fetch = FetchType.EAGER)

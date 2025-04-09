@@ -30,6 +30,7 @@ import java.util.Set;
 @EnableAsync
 @EnableFeignClients
 @SpringBootApplication(scanBasePackages = "tn.esprit")
+
 @Slf4j
 public class UserServiceApplication {
 
