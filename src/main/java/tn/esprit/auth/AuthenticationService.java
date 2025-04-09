@@ -1,5 +1,6 @@
 package tn.esprit.auth;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,11 +12,14 @@ import tn.esprit.dto.AuthenticationResponse;
 import tn.esprit.dto.RegistrationRequest;
 import tn.esprit.entity.Role;
 import tn.esprit.entity.RoleEnum;
+import tn.esprit.entity.Token;
 import tn.esprit.entity.User;
 import tn.esprit.repository.RoleRepository;
+import tn.esprit.repository.TokenRepository;
 import tn.esprit.repository.UserRepository;
 import tn.esprit.security.JwtService;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -28,27 +32,30 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenRepository tokenRepository;
 
     public void register(RegistrationRequest request) {
-        // Find the USER role from database
-        Role userRole = roleRepository.findByName(RoleEnum.USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role USER not found."));
+        // Find the requested role or default to USER
+        RoleEnum roleEnum = request.getRole() != null ? request.getRole() : RoleEnum.PET_OWNER;
+
+        Role role = roleRepository.findByName(roleEnum)
+                .orElseThrow(() -> new RuntimeException("Error: Role not found."));
 
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .enabled(true) // Account is enabled immediately
+                .enabled(true)
                 .accountLocked(false)
-                .roles(new HashSet<>()) // 👈 Important !
+                .roles(new HashSet<>())
                 .build();
 
-        // Add the USER role to the user
-        user.getRoles().add(userRole);
-
+        user.getRoles().add(role);
         userRepository.save(user);
     }
+    @Transactional
+
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -61,10 +68,38 @@ public class AuthenticationService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         var jwtToken = jwtService.generateToken(new HashMap<>(), user);
-        // 24 hours in minutes
+
+        // 👇 Save the token to the database
+        Token token = Token.builder()
+                .token(jwtToken)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .user(user)
+                .build();
+
+        tokenRepository.save(token);
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
+    }
+    public void logout(String token) {
+        Token storedToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token not found"));
+
+        // Check if token is already revoked
+        if (storedToken.isRevoked()) {
+            throw new RuntimeException("Token is already revoked");
+        }
+
+        // Check if token is expired
+        if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token is already expired");
+        }
+
+        storedToken.setRevoked(true);
+        storedToken.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(storedToken);
     }
 
 

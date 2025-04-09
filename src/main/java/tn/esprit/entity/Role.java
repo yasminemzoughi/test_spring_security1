@@ -24,9 +24,10 @@ public class Role {
     private RoleEnum name;
 
 
-    @ElementCollection(targetClass = Permission.class)
+    @ElementCollection(fetch = FetchType.EAGER, targetClass = Permission.class)
     @CollectionTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"))
     @Column(name = "permission", nullable = false)
     @Enumerated(EnumType.STRING)
     private Set<Permission> permissions = new HashSet<>();
+
 }

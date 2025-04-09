@@ -14,9 +14,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tn.esprit.entity.Token;
+import tn.esprit.repository.TokenRepository;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -25,11 +29,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
 
-    // List of public endpoints that don't require JWT authentication
-    private static final List<String> WHITELIST = List.of(
-            "/auth/**",
-            "/api/auth/**",
+    // More specific whitelist
+    private static final List<String> PUBLIC_ENDPOINTS = List.of(
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh-token",  // if you have refresh token endpoint
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
@@ -42,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String requestURI = request.getRequestURI();
-        log.debug("Processing request for: {}", requestURI);
+        log.debug("Processing request for: {} {}", request.getMethod(), requestURI);
 
         // Skip JWT filter for public endpoints
         if (isPublicEndpoint(requestURI)) {
@@ -51,20 +57,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
 
+        // Validate Authorization header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("Invalid or missing Authorization header for request: {}", requestURI);
-            filterChain.doFilter(request, response);
+            sendError(response, "Missing or invalid Authorization header", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        final String jwt = authHeader.substring(7);
+
+        // Basic token validation
+        if (jwt == null || jwt.isEmpty() || jwt.split("\\.").length != 3) {
+            sendError(response, "Invalid token structure", HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         try {
-            jwt = authHeader.substring(7);
-            userEmail = jwtService.extractUsername(jwt);
+            // Verify token in database first
+            Token storedToken = tokenRepository.findByToken(jwt)
+                    .orElseThrow(() -> new RuntimeException("Token not found in database"));
 
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (storedToken.isRevoked()) {
+                sendError(response, "Token has been revoked", HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
+            if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                sendError(response, "Token has expired", HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
+            // Extract username and validate
+            final String userEmail = jwtService.extractUsername(jwt);
+            if (userEmail == null) {
+                sendError(response, "Unable to extract user from token", HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
+            // Only authenticate if not already authenticated
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
@@ -73,24 +104,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             userDetails.getAuthorities()
                     );
-
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     log.debug("Authenticated user: {}", userEmail);
+                } else {
+                    sendError(response, "Invalid token signature", HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
                 }
             }
-        } catch (Exception e) {
-            log.error("Failed to process JWT token: {}", e.getMessage());
-            // You might want to send a 401 response here
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+
+        } catch (Exception e) {
+            log.error("Authentication error: {}", e.getMessage());
+            sendError(response, "Authentication failed: " + e.getMessage(), HttpServletResponse.SC_UNAUTHORIZED);
+        }
     }
 
     private boolean isPublicEndpoint(String requestURI) {
-        return WHITELIST.stream().anyMatch(requestURI::startsWith);
+        return PUBLIC_ENDPOINTS.stream().anyMatch(publicPath ->
+                requestURI.equals(publicPath) || requestURI.startsWith(publicPath)
+        );
+    }
+
+    private void sendError(HttpServletResponse response, String message, int status) throws IOException {
+        log.warn("Authentication failed: {}", message);
+        response.setContentType("application/json");
+        response.setStatus(status);
+        response.getWriter().write(
+                String.format("{\"error\": \"%s\", \"status\": %d}", message, status)
+        );
     }
 }
+
+
