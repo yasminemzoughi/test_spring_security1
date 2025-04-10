@@ -2,6 +2,8 @@ package tn.esprit.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -30,8 +32,7 @@ public class Token {
     @Column(nullable = false)
     private boolean revoked;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

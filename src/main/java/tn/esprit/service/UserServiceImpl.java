@@ -1,10 +1,13 @@
 package tn.esprit.service;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import tn.esprit.dto.UserUpdateRequest;
 import tn.esprit.entity.Role;
+import tn.esprit.entity.RoleEnum;
 import tn.esprit.entity.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
@@ -12,17 +15,13 @@ import tn.esprit.repository.UserRepository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import tn.esprit.service.IUserService;
-@NoArgsConstructor
-@AllArgsConstructor
+
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<User> retrieveAllUsers() {
@@ -34,39 +33,81 @@ public class UserServiceImpl implements IUserService {
         return userRepository.findById(id).orElse(null);
     }
 
-
+    @Override
+    @Transactional
     public User createUser(User user) {
-        Set<Role> validRoles = new HashSet<>();
-
-        for (Role role : user.getRoles()) {
-            Role existingRole = roleRepository.findByName(role.getName())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + role.getName())); // Handle missing role
-
-            validRoles.add(existingRole);
-        }
-
+        Set<Role> validRoles = validateAndGetRoles(user.getRoles());
         user.setRoles(validRoles);
         return userRepository.save(user);
     }
 
-
     @Override
+    @Transactional
     public String removeUser(Long id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-            return "User deleted successfully.";
-        }
-        return "User not found.";
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        userRepository.delete(user);
+        return "User deleted successfully";
     }
 
     @Override
-    public User modifyUser(User user) {
+    @Transactional
+    public User updateUser(User user) {
         return userRepository.save(user);
     }
 
+    @Override
+    @Transactional
+    public User updateUser(Long userId, UserUpdateRequest updateRequest) {
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        updateUserFields(existingUser, updateRequest);
+        return userRepository.save(existingUser);
+    }
 
+    @Override
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
 
+    private void updateUserFields(User user, UserUpdateRequest updateRequest) {
+        // Basic info
+        if (updateRequest.getFirstName() != null) {
+            user.setFirstName(updateRequest.getFirstName());
+        }
 
+        if (updateRequest.getLastName() != null) {
+            user.setLastName(updateRequest.getLastName());
+        }
 
+        // Email with uniqueness check
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            if (emailExists(updateRequest.getEmail())) {
+                throw new RuntimeException("Email already in use");
+            }
+            user.setEmail(updateRequest.getEmail());
+        }
 
+        // Password encoding
+        if (updateRequest.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+        }
+
+        // Role update (single role)
+        if (updateRequest.getRole() != null) {
+            Role role = roleRepository.findByName(updateRequest.getRole())
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + updateRequest.getRole()));
+            user.setRoles(Set.of(role));
+        }
+    }
+
+    private Set<Role> validateAndGetRoles(Set<Role> roles) {
+        Set<Role> validRoles = new HashSet<>();
+        for (Role role : roles) {
+            Role existingRole = roleRepository.findByName(role.getName())
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + role.getName()));
+            validRoles.add(existingRole);
+        }
+        return validRoles;
+    }
 }

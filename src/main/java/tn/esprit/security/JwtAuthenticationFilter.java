@@ -20,7 +20,6 @@ import tn.esprit.repository.TokenRepository;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -31,13 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
 
-    // More specific whitelist
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/auth/register",
             "/auth/login",
-            "/auth/refresh-token",  // if you have refresh token endpoint
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
+            "/auth/refresh-token",
+            "/v3/api-docs",
+            "/swagger-ui",
             "/swagger-ui.html"
     );
 
@@ -47,10 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
         final String requestURI = request.getRequestURI();
         log.debug("Processing request for: {} {}", request.getMethod(), requestURI);
 
-        // Skip JWT filter for public endpoints
         if (isPublicEndpoint(requestURI)) {
             filterChain.doFilter(request, response);
             return;
@@ -58,7 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // Validate Authorization header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             sendError(response, "Missing or invalid Authorization header", HttpServletResponse.SC_UNAUTHORIZED);
             return;
@@ -66,14 +63,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String jwt = authHeader.substring(7);
 
-        // Basic token validation
-        if (jwt == null || jwt.isEmpty() || jwt.split("\\.").length != 3) {
+        if (jwt.split("\\.").length != 3) {
             sendError(response, "Invalid token structure", HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         try {
-            // Verify token in database first
+            // 1. Find token in DB
             Token storedToken = tokenRepository.findByToken(jwt)
                     .orElseThrow(() -> new RuntimeException("Token not found in database"));
 
@@ -87,16 +83,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Extract username and validate
+            // 2. Extract username from JWT
             final String userEmail = jwtService.extractUsername(jwt);
             if (userEmail == null) {
                 sendError(response, "Unable to extract user from token", HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            // Only authenticate if not already authenticated
+            // 3. If not already authenticated, do it
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -108,7 +104,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     log.debug("Authenticated user: {}", userEmail);
                 } else {
-                    sendError(response, "Invalid token signature", HttpServletResponse.SC_UNAUTHORIZED);
+                    sendError(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
             }
@@ -116,14 +112,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("Authentication error: {}", e.getMessage());
+            log.error("Authentication error: {}", e.getMessage(), e);
             sendError(response, "Authentication failed: " + e.getMessage(), HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 
     private boolean isPublicEndpoint(String requestURI) {
         return PUBLIC_ENDPOINTS.stream().anyMatch(publicPath ->
-                requestURI.equals(publicPath) || requestURI.startsWith(publicPath)
+                requestURI.equals(publicPath) || requestURI.startsWith(publicPath + "/")
         );
     }
 
@@ -136,5 +132,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         );
     }
 }
-
-

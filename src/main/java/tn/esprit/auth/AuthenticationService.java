@@ -33,7 +33,6 @@ public class AuthenticationService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
 
     public void register(RegistrationRequest request) {
@@ -58,35 +57,37 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
+        var user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-            var user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow();
-
-            var jwtToken = jwtService.generateToken(user);
-
-            // Save token to database
-            Token token = Token.builder()
-                    .token(jwtToken)
-                    .createdAt(LocalDateTime.now())
-                    .expiresAt(LocalDateTime.now().plusHours(24)) // Set your desired expiration
-                    .revoked(false)
-                    .user(user)
-                    .build();
-            tokenRepository.save(token);
-
-            return AuthenticationResponse.builder()
-                    .token(jwtToken)
-                    .build();
-        } catch (AuthenticationException e) {
+        // Verify password manually
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
         }
+
+        if (!user.isEnabled()) {
+            throw new BadCredentialsException("Account disabled");
+        }
+
+        if (user.isAccountLocked()) {
+            throw new BadCredentialsException("Account locked");
+        }
+
+        var jwtToken = jwtService.generateToken(user);
+
+        // Save token to database
+        Token token = Token.builder()
+                .token(jwtToken)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .revoked(false)
+                .user(user)
+                .build();
+        tokenRepository.save(token);
+
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 
     public void logout(String token) {

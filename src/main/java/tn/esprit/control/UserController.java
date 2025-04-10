@@ -3,8 +3,12 @@ package tn.esprit.control;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.dto.UserUpdateRequest;
 import tn.esprit.entity.Role;
+import tn.esprit.entity.RoleEnum;
 import tn.esprit.entity.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
@@ -12,131 +16,112 @@ import tn.esprit.service.IUserService;
 import java.util.*;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
+@PreAuthorize("hasRole('PET_OWNER') and hasRole('ADMIN')")
 public class UserController {
 
     private final IUserService userService;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(IUserService userService) {
+    public UserController(IUserService userService,
+                          RoleRepository roleRepository,
+                          UserRepository userRepository,
+                          PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
-//http://localhost:8081/user-service/user/create_user
+
+
+    //http://localhost:8081/user-service/user/create_user
     @PostMapping("/create_user")
     public ResponseEntity<?> createUser(@RequestBody User user) {
         try {
-            // First check if email already exists
-            if (userRepository.existsByEmail(user.getEmail())) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body(Map.of(
-                                "error", "User already exists",
-                                "message", "A user with email '" + user.getEmail() + "' already exists"
-                        ));
+            if (userService.emailExists(user.getEmail())) {
+                return errorResponse("User exists", "Email already in use", HttpStatus.CONFLICT);
             }
-
-            // Validate roles
-            if (user.getRoles() == null || user.getRoles().isEmpty()) {
-                return ResponseEntity.badRequest().body("At least one role is required");
-            }
-
-            Set<Role> validatedRoles = new HashSet<>();
-            for (Role role : user.getRoles()) {
-                if (role.getName() == null) {
-                    return ResponseEntity.badRequest().body("Role name cannot be null");
-                }
-
-                Role existingRole = roleRepository.findByName(role.getName())
-                        .orElseThrow(() -> new RuntimeException("Role '" + role.getName() + "' does not exist"));
-                validatedRoles.add(existingRole);
-
-            }
-            user.setRoles(validatedRoles);
-
-            // Create the user (profile picture URL can be included in the request)
             User savedUser = userService.createUser(user);
             return ResponseEntity.ok(savedUser);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error creating user: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return errorResponse("Validation error", e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    // http://localhost:8081/user-service/user/retrieve-all-users
+    private ResponseEntity<Map<String, String>> errorResponse(String error, String message, HttpStatus status) {
+        return ResponseEntity.status(status)
+                .body(Map.of("error", error, "message", message));
+    }
+
+    @PreAuthorize("hasAnyAuthority('admin:read')")
     @GetMapping("/retrieve-all-users")
     public List<User> getUsers() {
         return userService.retrieveAllUsers();
     }
 
-    //http://localhost:8081/user-service/user/retrieve-user/{{user-id}}
+    @PreAuthorize("hasAnyAuthority('pet_owner:read', 'admin:read')")
     @GetMapping("/retrieve-user/{user-id}")
     public ResponseEntity<?> retrieveUser(@PathVariable("user-id") Long id) {
         User user = userService.retrieveUser(id);
         return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.badRequest().body("User not found");
     }
 
-    //http://localhost:8081/user-service/user/remove-user/{{user-id}}
+    @PreAuthorize("hasAnyAuthority('pet_owner:delete', 'admin:delete')")
     @DeleteMapping("/remove-user/{user-id}")
     public ResponseEntity<?> removeUser(@PathVariable("user-id") Long id) {
         return ResponseEntity.ok(userService.removeUser(id));
     }
 
-    // http://localhost:8081/user-service/user/modify-user
-    @PutMapping("/modify-user")
-    public ResponseEntity<?> modifyUser(@RequestBody User user) {
+    @PreAuthorize("hasAnyAuthority('pet_owner:update', 'admin:update')")
+    @PutMapping("/modify-user/{userId}")
+    public ResponseEntity<?> modifyUser(
+            @PathVariable Long userId,
+            @RequestBody UserUpdateRequest updateRequest) {
         try {
-            // 1. Validate required user ID
-            if (user.getId() == null) {
-                return ResponseEntity.badRequest().body(
-                        Map.of("error", "User ID is required")
-                );
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User not found"));
             }
 
-            // 2. Check if user exists
-            Optional<User> existingUser = userRepository.findById(user.getId());
-            if (existingUser.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        Map.of("error", "User not found")
-                );
-            }
+            User existingUser = optionalUser.get();
 
-            // 3. Validate email uniqueness (if email is being changed)
-            if (user.getEmail() != null &&
-                    !user.getEmail().equals(existingUser.get().getEmail())) {
-                if (userRepository.existsByEmail(user.getEmail())) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                            Map.of("error", "Email already in use")
-                    );
+            // Update fields
+            if (updateRequest.getFirstName() != null) {
+                existingUser.setFirstName(updateRequest.getFirstName());
+            }
+            if (updateRequest.getLastName() != null) {
+                existingUser.setLastName(updateRequest.getLastName());
+            }
+            if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(existingUser.getEmail())) {
+                if (userRepository.existsByEmail(updateRequest.getEmail())) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error", "Email already in use"));
                 }
+                existingUser.setEmail(updateRequest.getEmail());
+            }
+            if (updateRequest.getPassword() != null) {
+                existingUser.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
             }
 
-            // 4. Handle roles (validate if provided, otherwise keep existing)
-            if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-                Set<Role> validatedRoles = new HashSet<>();
-                for (Role role : user.getRoles()) {
-                    Role existingRole = roleRepository.findByName(role.getName())
-                            .orElseThrow(() -> new RuntimeException("Invalid role: " + role.getName())); // Fix the error
-
-                    validatedRoles.add(existingRole);
-                }
-                user.setRoles(validatedRoles);
-            } else {
-                // Keep existing roles if none provided
-                user.setRoles(existingUser.get().getRoles());
+            // Update role (single role now)
+            if (updateRequest.getRole() != null) {
+                Role role = roleRepository.findByName(updateRequest.getRole())
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid role: " + updateRequest.getRole()));
+                existingUser.setRoles(Set.of(role)); // Set with single role
             }
 
-            // 5. Save changes
-            User updatedUser = userService.modifyUser(user);
+            User updatedUser = userService.updateUser(existingUser);
             return ResponseEntity.ok(updatedUser);
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid role", "details", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(
-                    Map.of("error", "Update failed", "details", e.getMessage())
-            );
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Update failed", "details", e.getMessage()));
         }
     }
-
 }

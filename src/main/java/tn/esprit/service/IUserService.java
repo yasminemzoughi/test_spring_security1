@@ -2,6 +2,7 @@ package tn.esprit.service;
 
 
 
+import tn.esprit.dto.UserUpdateRequest;
 import tn.esprit.entity.User;
 
 import java.util.List;
@@ -11,9 +12,8 @@ public interface IUserService {
     List<User> retrieveAllUsers();
     User retrieveUser(Long id);
     User createUser(User user);
-
     String removeUser(Long id);
-
-    User modifyUser(User user);
-
+    User updateUser(User user); // Keep this for backward compatibility
+    User updateUser(Long userId, UserUpdateRequest updateRequest); // Add the new method
+    boolean emailExists(String email);
 }

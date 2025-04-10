@@ -1,5 +1,6 @@
 package tn.esprit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -51,7 +52,9 @@ public class User implements UserDetails {
         return authorities;
     }
 
-
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Token> tokens = new ArrayList<>();
     @Override
     public String getUsername() {
         return email;
