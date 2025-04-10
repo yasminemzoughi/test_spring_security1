@@ -1,5 +1,6 @@
 package tn.esprit.control;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,6 +70,9 @@ public class UserController {
     public ResponseEntity<?> removeUser(@PathVariable("user-id") Long id) {
         return ResponseEntity.ok(userService.removeUser(id));
     }
+
+
+
 
  //   @PreAuthorize("hasAnyRole('PET_OWNER', 'ADMIN')")
     @PutMapping("/modify-user/{userId}")

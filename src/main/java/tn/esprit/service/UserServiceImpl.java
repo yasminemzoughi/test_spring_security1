@@ -3,6 +3,7 @@ package tn.esprit.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import tn.esprit.dto.UserUpdateRequest;
@@ -41,15 +42,24 @@ public class UserServiceImpl implements IUserService {
         return userRepository.save(user);
     }
 
-    @Override
+    /*@Override
     @Transactional
     public String removeUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         userRepository.delete(user);
         return "User deleted successfully";
+    }*/
+    @Override
+    @Transactional
+    public ResponseEntity<?> removeUser(Long id) {
+        // Check if user exists
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        // Perform the deletion
+        userRepository.delete(user);
+        return ResponseEntity.ok().body("User deleted successfully");
     }
-
     @Override
     @Transactional
     public User updateUser(User user) {
