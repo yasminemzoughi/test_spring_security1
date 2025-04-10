@@ -1,6 +1,5 @@
 package tn.esprit.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import tn.esprit.entity.RoleEnum;

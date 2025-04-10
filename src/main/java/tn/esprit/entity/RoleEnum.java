@@ -32,8 +32,22 @@ public enum RoleEnum {
                     Permission.PET_OWNER_DELETE
             )
     ),
-    VETERINARIAN(Collections.emptySet()),
-    SERVICE_PROVIDER(Collections.emptySet());
+    VETERINARIAN(
+            Set.of(
+                    Permission.VETERINARIAN_READ,
+                    Permission.VETERINARIAN_UPDATE,
+                    Permission.VETERINARIAN_CREATE,
+                    Permission.VETERINARIAN_DELETE
+            )
+    ),
+    SERVICE_PROVIDER(
+            Set.of(
+                    Permission.SERVICE_PROVIDER_READ,
+                    Permission.SERVICE_PROVIDER_UPDATE,
+                    Permission.SERVICE_PROVIDER_CREATE,
+                    Permission.SERVICE_PROVIDER_DELETE
+            )
+    );
 
     @Getter
     private final Set<Permission> permissions;

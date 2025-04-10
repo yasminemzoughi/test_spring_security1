@@ -14,8 +14,9 @@ import tn.esprit.service.IUserService;
 import java.util.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/user")
-@PreAuthorize("hasRole('PET_OWNER') and hasRole('ADMIN')")
+//@PreAuthorize("hasRole('PET_OWNER') and hasRole('ADMIN')")
 public class UserController {
 
     private final IUserService userService;
@@ -32,9 +33,6 @@ public class UserController {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
-
-
-    //http://localhost:8081/user-service/user/create_user
     @PostMapping("/create_user")
     public ResponseEntity<?> createUser(@RequestBody User user) {
         try {
@@ -59,20 +57,20 @@ public class UserController {
         return userService.retrieveAllUsers();
     }
 
-    @PreAuthorize("hasAnyAuthority('pet_owner:read', 'admin:read')")
+   // @PreAuthorize("hasAnyAuthority('pet_owner:read', 'admin:read')")
     @GetMapping("/retrieve-user/{user-id}")
     public ResponseEntity<?> retrieveUser(@PathVariable("user-id") Long id) {
         User user = userService.retrieveUser(id);
         return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.badRequest().body("User not found");
     }
 
-    @PreAuthorize("hasAnyAuthority('pet_owner:delete', 'admin:delete')")
+   // @PreAuthorize("hasAnyAuthority('pet_owner:delete', 'admin:delete')")
     @DeleteMapping("/remove-user/{user-id}")
     public ResponseEntity<?> removeUser(@PathVariable("user-id") Long id) {
         return ResponseEntity.ok(userService.removeUser(id));
     }
 
-    @PreAuthorize("hasAnyAuthority('pet_owner:update', 'admin:update')")
+ //   @PreAuthorize("hasAnyRole('PET_OWNER', 'ADMIN')")
     @PutMapping("/modify-user/{userId}")
     public ResponseEntity<?> modifyUser(
             @PathVariable Long userId,
