@@ -1,6 +1,5 @@
 package tn.esprit.control;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,7 +7,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.dto.UserUpdateRequest;
 import tn.esprit.entity.Role;
-import tn.esprit.entity.RoleEnum;
 import tn.esprit.entity.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
@@ -124,4 +122,7 @@ public class UserController {
                     .body(Map.of("error", "Update failed", "details", e.getMessage()));
         }
     }
+
+
+
 }

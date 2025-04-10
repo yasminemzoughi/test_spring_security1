@@ -14,5 +14,5 @@ public class UserUpdateRequest {
     private String lastName;
     private String email;
     private String password;
-    private RoleEnum role;
+    private RoleEnum role;gi
 }

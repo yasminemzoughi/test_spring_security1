@@ -1,12 +1,8 @@
 package tn.esprit.auth;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import tn.esprit.dto.AuthenticationRequest;
@@ -20,9 +16,7 @@ import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.TokenRepository;
 import tn.esprit.repository.UserRepository;
 import tn.esprit.security.JwtService;
-
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 
 @Slf4j
@@ -73,7 +67,8 @@ public class AuthenticationService {
             throw new BadCredentialsException("Account locked");
         }
 
-        var jwtToken = jwtService.generateToken(user);
+        // Pass both UserDetails and user ID to generateToken
+        var jwtToken = jwtService.generateToken(user, user.getId());
 
         // Save token to database
         Token token = Token.builder()
@@ -89,7 +84,6 @@ public class AuthenticationService {
                 .token(jwtToken)
                 .build();
     }
-
     public void logout(String token) {
         Token storedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token not found"));
