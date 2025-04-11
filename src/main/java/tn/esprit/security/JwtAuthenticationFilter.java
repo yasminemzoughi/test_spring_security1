@@ -32,11 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/auth/register",
-            "/auth/login",
-            "/auth/refresh-token",
-            "/v3/api-docs",
-            "/swagger-ui",
-            "/swagger-ui.html"
+            "/auth/login"
     );
 
     @Override

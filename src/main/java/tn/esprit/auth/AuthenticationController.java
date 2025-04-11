@@ -37,9 +37,7 @@ public class AuthenticationController {
             authenticationService.register(request);
             return ResponseEntity.ok().build();
 
-            // Option 2: Return token directly after registration
-            // AuthenticationResponse response = authenticationService.registerAndAuthenticate(request);
-            // return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -74,13 +72,14 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/logout")
+ @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
 
         authenticationService.logout(token);
         return ResponseEntity.ok("Logged out successfully.");
     }
+
 
 
 }

@@ -16,7 +16,7 @@ import java.util.*;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
-@RequestMapping("/api/user")
+@RequestMapping("/api/admin")
 //@PreAuthorize("hasRole('PET_OWNER') and hasRole('ADMIN')")
 public class UserController {
 
@@ -51,8 +51,6 @@ public class UserController {
         return ResponseEntity.status(status)
                 .body(Map.of("error", error, "message", message));
     }
-
-    @PreAuthorize("hasAnyAuthority('admin:read')")
     @GetMapping("/retrieve-all-users")
     public List<User> getUsers() {
         return userService.retrieveAllUsers();
