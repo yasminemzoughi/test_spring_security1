@@ -16,7 +16,7 @@ import java.util.*;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
-@RequestMapping("/api/admin")
+@RequestMapping("/api/user")
 //@PreAuthorize("hasRole('PET_OWNER') and hasRole('ADMIN')")
 public class UserController {
 
@@ -34,27 +34,8 @@ public class UserController {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
-    @PostMapping("/create_user")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
-        try {
-            if (userService.emailExists(user.getEmail())) {
-                return errorResponse("User exists", "Email already in use", HttpStatus.CONFLICT);
-            }
-            User savedUser = userService.createUser(user);
-            return ResponseEntity.ok(savedUser);
-        } catch (RuntimeException e) {
-            return errorResponse("Validation error", e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
 
-    private ResponseEntity<Map<String, String>> errorResponse(String error, String message, HttpStatus status) {
-        return ResponseEntity.status(status)
-                .body(Map.of("error", error, "message", message));
-    }
-    @GetMapping("/retrieve-all-users")
-    public List<User> getUsers() {
-        return userService.retrieveAllUsers();
-    }
+
 
    // @PreAuthorize("hasAnyAuthority('pet_owner:read', 'admin:read')")
     @GetMapping("/retrieve-user/{user-id}")
@@ -68,8 +49,6 @@ public class UserController {
     public ResponseEntity<?> removeUser(@PathVariable("user-id") Long id) {
         return ResponseEntity.ok(userService.removeUser(id));
     }
-
-
 
 
  //   @PreAuthorize("hasAnyRole('PET_OWNER', 'ADMIN')")
