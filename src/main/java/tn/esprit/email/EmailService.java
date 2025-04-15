@@ -3,7 +3,9 @@ package tn.esprit.email;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;  // Correct import
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -14,58 +16,95 @@ import org.thymeleaf.context.Context;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${spring.mail.admin.email}")
-    private String adminEmail;
+    @Value("${mailing.frontend.activation-url:http://localhost:4200/activate_account}")
+    private String frontendActivationUrl;
 
     @Async
-    public void sendEmail(
-            String to,
-            String username,
-            String activationUrl,
-            String activationCode,
-            String subject
-    ) throws MessagingException {
-        // Send to user
-        sendEmailToAddress(to, username, activationUrl, activationCode, subject);
+    public void sendActivationEmail(String to, String username, String activationCode)
+            throws MessagingException {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-        // Send copy to admin
-        sendEmailToAddress(adminEmail, username, activationUrl, activationCode,
-                "[ADMIN COPY] " + subject);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("username", username);
+            variables.put("activationCode", activationCode);
+            variables.put("activationLink", frontendActivationUrl);
+
+            Context context = new Context();
+            context.setVariables(variables);
+
+            String htmlContent = templateEngine.process(
+                    "activate_account",
+                    context
+            );
+
+            helper.setTo(to);
+            helper.setSubject("Your Account Activation Code");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(mimeMessage);
+            log.info("Activation email sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send activation email to: {}", to, e);
+            throw e;
+        }
     }
 
-    private void sendEmailToAddress(
-            String to,
-            String username,
-            String activationUrl,
-            String activationCode,
-            String subject
-    ) throws MessagingException {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+    @Async
+    public void sendAdminNotification(String to, String subject, String content) {
+        try {
+            // For admin, we'll use a simple text email
+            // You could also create a HTML template for admin notifications
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(content);
+            mailSender.send(message);
+            log.info("Admin notification sent to: {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send admin notification: {}", e.getMessage());
+        }
+    }
 
-        // Prepare template variables
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("username", username);
-        variables.put("activation_code", activationCode);
-        variables.put("confirmationUrl", activationUrl + "?token=" + activationCode);
+    // Optional: Create HTML admin notification if you prefer
+    @Async
+    public void sendAdminHtmlNotification(String to, String userEmail, String activationCode)
+            throws MessagingException {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
-        Context context = new Context();
-        context.setVariables(variables);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("username", "Admin");
+            variables.put("userEmail", userEmail);
+            variables.put("activationCode", activationCode);
+            variables.put("activationLink", frontendActivationUrl);
 
-        // Process Thymeleaf template
-        String htmlContent = templateEngine.process("activate_account", context);
+            Context context = new Context();
+            context.setVariables(variables);
 
-        // Configure email
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
+            String htmlContent = templateEngine.process(
+                    "admin_notification",
+                    context
+            );
 
-        mailSender.send(mimeMessage);
+            helper.setTo(to);
+            helper.setSubject("New User Registration: " + userEmail);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(mimeMessage);
+            log.info("Admin HTML notification sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send admin HTML notification: {}", e.getMessage());
+            // Don't throw, as admin notification is not critical
+        }
     }
 }

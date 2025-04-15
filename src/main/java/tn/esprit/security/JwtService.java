@@ -45,29 +45,7 @@ public class JwtService {
         return generateToken(new HashMap<>(), userDetails, userId);
     }
 
-   /* public String generateToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails,
-            Long userId
-    ) {
-        // Add roles/authorities to claims
-        extraClaims.put("roles", userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()));
 
-        // Add user ID to claims
-        extraClaims.put("userId", userId);
-
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    */
    public String generateToken(
            Map<String, Object> extraClaims,
            UserDetails userDetails,

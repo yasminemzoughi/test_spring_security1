@@ -1,59 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Activation</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #007bff; color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; background-color: #f9f9f9; }
+        .header { background-color: #f8f9fa; padding: 10px; text-align: center; }
+        .content { padding: 20px; }
         .code {
             font-size: 24px;
             font-weight: bold;
+            letter-spacing: 2px;
             text-align: center;
             margin: 20px 0;
             padding: 10px;
             background-color: #e9ecef;
             border-radius: 5px;
         }
-        .button {
+        .btn {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #28a745;
+            padding: 10px 15px;
+            background-color: #007bff;
             color: white;
             text-decoration: none;
             border-radius: 5px;
-            margin: 20px 0;
         }
-        .footer { margin-top: 20px; font-size: 12px; color: #6c757d; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>Welcome to Our Service</h1>
+        <h2>Account Activation</h2>
     </div>
     <div class="content">
         <p>Hello <span th:text="${username}"></span>,</p>
-        <p>Thank you for registering with us. To complete your registration, please activate your account.</p>
+        <p>Thank you for registering. Here is your activation code:</p>
+        <div class="code" th:text="${activationCode}">123456</div>
+        <p>Please enter this code in the application to activate your account.</p>
+        <a href="http://localhost:4200/activate_account" class="btn">Click here to activate your account</a>
 
-        <p>Your activation code is:</p>
-        <div class="code" th:text="${activation_code}"></div>
-
-        <p>Click the button below to enter your activation code:</p>
-        <p>
-            <a th:href="${frontendActivationUrl}" class="button">Enter Activation Code</a>
-        </p>
-
-        <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-        <p><small th:text="${frontendActivationUrl}"></small></p>
-
-        <p>This activation code will expire in 15 minutes.</p>
-    </div>
-    <div class="footer">
-        <p>If you didn't request this registration, please ignore this email.</p>
+        <p><em>This code will expire in 15 minutes.</em></p>
     </div>
 </div>
 </body>
