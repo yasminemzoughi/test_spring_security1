@@ -1,6 +1,7 @@
 package tn.esprit.auth;
 
 import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,7 +49,7 @@ public class AuthenticationController {
             );
         }
     }
-
+    @Transactional
     @PostMapping("/activate")
     public ResponseEntity<?> activateAccount(@RequestParam String code) {
         try {
