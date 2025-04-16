@@ -87,7 +87,7 @@
         <h2>Welcome to Our FuRREverBuddy</h2>
     </div>
     <div class="content">
-        <p>Hello <strong th:text="${firstName + ' ' + lastName}">User</strong>,</p>
+        <p>Hello <span th:text="${firstName}"></span>,</p>
         <p>Thank you for registering with us. To complete your account activation, please use the following verification code:</p>
 
         <div class="code" th:text="${activationCode}">123456</div>
