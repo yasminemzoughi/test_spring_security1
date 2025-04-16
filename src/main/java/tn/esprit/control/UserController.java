@@ -1,11 +1,13 @@
 package tn.esprit.control;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.dto.UserResponseDTO;
 import tn.esprit.dto.UserUpdateRequest;
 import tn.esprit.entity.Role;
 import tn.esprit.entity.User;
@@ -38,11 +40,19 @@ public class UserController {
 
 
    // @PreAuthorize("hasAnyAuthority('pet_owner:read', 'admin:read')")
-    @GetMapping("/retrieve-user/{user-id}")
-    public ResponseEntity<?> retrieveUser(@PathVariable("user-id") Long id) {
-        User user = userService.retrieveUser(id);
-        return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.badRequest().body("User not found");
-    }
+   @GetMapping("/retrieve-user/{user-id}")
+   public ResponseEntity<?> retrieveUser(@PathVariable("user-id") Long id) {
+       try {
+           User user = userService.retrieveUser(id);
+           if (user == null) {
+               return ResponseEntity.notFound().build();
+           }
+           return ResponseEntity.ok(UserResponseDTO.fromUser(user));
+       } catch (Exception e) {
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body("Error retrieving user");
+       }
+   }
 
    // @PreAuthorize("hasAnyAuthority('pet_owner:delete', 'admin:delete')")
     @DeleteMapping("/remove-user/{user-id}")

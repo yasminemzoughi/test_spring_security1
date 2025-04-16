@@ -3,6 +3,7 @@ package tn.esprit.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,12 +31,14 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Transactional
     public User retrieveUser(Long id) {
-        return userRepository.findById(id).orElse(null);
+        // Use a JOIN FETCH query to load all needed data in one query
+        return userRepository.findByIdWithRoles(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     @Override
-    @Transactional
     public User createUser(User user) {
         Set<Role> validRoles = validateAndGetRoles(user.getRoles());
         user.setRoles(validRoles);

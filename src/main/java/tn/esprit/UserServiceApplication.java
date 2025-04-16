@@ -37,8 +37,7 @@ public class UserServiceApplication {
     @Value("${app.admin.email}")
     private String adminEmail;
 
-    @Value("${app.admin.password}")
-    private String adminPassword;
+
 
     public static void main(String[] args) {
         SpringApplication.run(UserServiceApplication.class, args);
@@ -47,11 +46,8 @@ public class UserServiceApplication {
     @Bean
     @Transactional
     public CommandLineRunner commandLineRunner(
-            AuthenticationService service,
-            RoleRepository roleRepository,
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            RoleRepository roleRepository)
+           {
         return args -> {
             initializeRoles(roleRepository);
         };

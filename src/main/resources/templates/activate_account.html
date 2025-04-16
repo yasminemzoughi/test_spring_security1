@@ -1,46 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Account Activation</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 10px; text-align: center; }
-        .content { padding: 20px; }
-        .code {
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-align: center;
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #e9ecef;
-            border-radius: 5px;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fdf4;
+            color: #2f3e33;
+            margin: 0;
+            padding: 0;
         }
+
+        .container {
+            max-width: 600px;
+            background: #ffffff;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border-top: 5px solid #34a853;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #d4edda;
+        }
+
+        .header h2 {
+            color: #2e7d32;
+            margin: 0;
+        }
+
+        .content {
+            padding-top: 20px;
+        }
+
+        .content p {
+            line-height: 1.6;
+        }
+
+        .code {
+            display: inline-block;
+            font-size: 28px;
+            background-color: #e6f4ea;
+            color: #1b5e20;
+            padding: 12px 24px;
+            margin: 20px 0;
+            border-radius: 8px;
+            letter-spacing: 4px;
+            font-weight: bold;
+        }
+
+        ol {
+            padding-left: 20px;
+        }
+
         .btn {
             display: inline-block;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
+            margin: 20px 0;
+            padding: 12px 28px;
+            background-color: #34a853;
+            color: white !important;
             text-decoration: none;
-            border-radius: 5px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2e7d32;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h2>Account Activation</h2>
+        <h2>Welcome to Our FuRREverBuddy</h2>
     </div>
     <div class="content">
-        <p>Hello <span th:text="${username}"></span>,</p>
-        <p>Thank you for registering. Here is your activation code:</p>
-        <div class="code" th:text="${activationCode}">123456</div>
-        <p>Please enter this code in the application to activate your account.</p>
-        <a href="http://localhost:4200/activate_account" class="btn">Click here to activate your account</a>
+        <p>Hello <strong th:text="${firstName + ' ' + lastName}">User</strong>,</p>
+        <p>Thank you for registering with us. To complete your account activation, please use the following verification code:</p>
 
-        <p><em>This code will expire in 15 minutes.</em></p>
+        <div class="code" th:text="${activationCode}">123456</div>
+
+        <p>You can either:</p>
+        <ol>
+            <li>Enter this code manually in the app, or</li>
+            <li>Click the button below to activate your account automatically:</li>
+        </ol>
+
+        <a th:href="${'http://localhost:4200/activate_account?code=' + activationCode}" class="btn">
+            Activate My Account
+        </a>
+
+        <p>For security reasons, this code will expire in <strong>15 minutes</strong>.</p>
+        <p>If you didn’t request this, please ignore this email.</p>
+    </div>
+    <div class="footer">
+        &copy; 2025 furreverbuddy. All rights reserved.
     </div>
 </div>
 </body>

@@ -47,13 +47,12 @@ public class User implements UserDetails {
                     .forEach(authorities::add);
         }
 
-        System.out.println("User authorities: " + authorities); // <--- Add this
+        System.out.println("User authorities: " + authorities);
 
         return authorities;
     }
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Token> tokens = new ArrayList<>();
     @Override
     public String getUsername() {

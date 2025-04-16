@@ -32,13 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenRepository tokenRepository;
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/auth/register",
             "/api/auth/register",
-            "/auth/login",
             "/api/auth/login",
-            "/api/auth/activate",
-            "/auth/activate"
-    );
+            "/api/auth/activate");
 
         @Override
         protected void doFilterInternal(

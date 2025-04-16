@@ -51,9 +51,9 @@ public class AuthenticationController {
     }
     @Transactional
     @PostMapping("/activate")
-    public ResponseEntity<?> activateAccount(@RequestParam String code) {
+    public ResponseEntity<?> activateAccount(@RequestBody Map<String, String> request) {
         try {
-            authenticationService.activateAccount(code);
+            authenticationService.activateAccount(request.get("code"));
             return ResponseEntity.ok().body(
                     Map.of("success", true, "message", "Account activated successfully!")
             );
