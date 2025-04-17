@@ -8,8 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.dto.AuthenticationRequest;
-import tn.esprit.dto.RegistrationRequest;
+import tn.esprit.dto.auth.AuthenticationRequest;
+import tn.esprit.dto.auth.RegistrationRequest;
 
 import java.util.Map;
 import java.util.stream.Collectors;

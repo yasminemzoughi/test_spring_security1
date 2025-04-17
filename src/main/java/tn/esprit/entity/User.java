@@ -54,6 +54,10 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Token> tokens = new ArrayList<>();
+
+
+    private String profileImageUrl;
+
     @Override
     public String getUsername() {
         return email;

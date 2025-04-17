@@ -1,7 +1,6 @@
-package tn.esprit.dto;
+package tn.esprit.dto.user;
 
 import lombok.Data;
-import tn.esprit.entity.Role;
 import tn.esprit.entity.User;
 
 import java.util.Set;
@@ -15,6 +14,7 @@ public class UserResponseDTO {
     private String email;
     private Set<String> roles;
     private boolean enabled;
+    private String profileImageUrl;  // Add this field for the image URL
 
     // Static conversion method
     public static UserResponseDTO fromUser(User user) {
@@ -24,11 +24,10 @@ public class UserResponseDTO {
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
         dto.setEnabled(user.isEnabled());
-
+        dto.setProfileImageUrl(user.getProfileImageUrl()); // Ensure this maps correctly
         dto.setRoles(user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet()));
-
         return dto;
     }
 }

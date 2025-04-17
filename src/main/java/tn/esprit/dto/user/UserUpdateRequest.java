@@ -1,4 +1,4 @@
-package tn.esprit.dto;
+package tn.esprit.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,4 +14,6 @@ public class UserUpdateRequest {
     private String email;
     private String password;
     private RoleEnum role;
+    private String profileImageUrl;
+
 }

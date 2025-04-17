@@ -1,4 +1,4 @@
-package tn.esprit.dto;
+package tn.esprit.dto.auth;
 
 import lombok.*;
 
