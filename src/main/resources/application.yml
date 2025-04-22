@@ -49,10 +49,7 @@ app:
   embedding:
     service:
       url: http://localhost:8000/embed
-      timeout-ms: 10000
-  openai:
-    api:
-      key: ${OPENAI_API_KEY}
+      timeout: 5000
 
 eureka:
   instance:

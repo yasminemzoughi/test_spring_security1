@@ -42,7 +42,11 @@ public class SecurityConfig {
                                 "/api/auth/activate",
                                 "/api/user/uploads/**",
                                 "/api/user/images/**",
-                                "/api/pets/**"
+                                "/api/pets/**",
+                                "/swagger-ui/**",          // Add this
+                                "/v3/api-docs/**",         // Add this
+                                "/swagger-resources/**",    // Add this
+                                "/webjars/**"              // Add this
 
 
                         ).permitAll()

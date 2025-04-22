@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.beans.Transient;
+import jakarta.persistence.Transient;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 

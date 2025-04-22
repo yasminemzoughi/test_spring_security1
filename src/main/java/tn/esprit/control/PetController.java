@@ -1,24 +1,33 @@
 package tn.esprit.control;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.entity.pets.Pets;
+import tn.esprit.repository.PetsRepository;
 import tn.esprit.service.Pet.IPetService;
+import tn.esprit.service.embede.EmbeddingService;
 
 import java.util.List;
 
 @RestController
+@AllArgsConstructor
 @RequestMapping("/api/pets")
 public class PetController {
 
     @Autowired
     private IPetService petService;
+    private  final PetsRepository petsRepository;
+    private final EmbeddingService embeddingService;
+
 
     // Get all pets
     @GetMapping("get_all_pets")
     public List<Pets> getAllPets() {
-        return petService.getAllEquipes();
+        return petService.getAllPets();
     }
 
     // Get pet by ID
@@ -47,4 +56,5 @@ public class PetController {
         petService.deletePets(id);
         return ResponseEntity.noContent().build();
     }
+
 }

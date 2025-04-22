@@ -1,18 +1,18 @@
 package tn.esprit.control;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.constraints.NotNull;
-import lombok.NoArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.entity.pets.Pets;
-import tn.esprit.repository.RoleRepository;
-import tn.esprit.repository.UserRepository;
-import tn.esprit.service.IUserService;
 import tn.esprit.service.embede.MatchingService;
 
 import java.util.List;
+@RestController
+@RequestMapping("/api/matches")
 public class MatchController {
     private final MatchingService matchingService;
 
@@ -21,7 +21,7 @@ public class MatchController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<Pets> getTopMatches(@PathVariable Long userId) {
-        return matchingService.findTopMatches(userId, 3);
+    public ResponseEntity<List<Pets>> getTopMatches(@PathVariable Long userId) {
+        return ResponseEntity.ok(matchingService.findTopMatches(userId, 3));
     }
 }

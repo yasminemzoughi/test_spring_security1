@@ -1,23 +1,28 @@
 package tn.esprit.service.Pet;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.esprit.entity.pets.Pets;
 import tn.esprit.repository.PetsRepository;
+import tn.esprit.service.embede.EmbeddingService;
 
 import java.util.List;
 
-@Getter
-@Setter
+
 @Service
+@RequiredArgsConstructor
 public class PetServiceImpl implements IPetService {
 
     @Autowired
     private PetsRepository petsRepository;
 
+    private final EmbeddingService embeddingService;
     @Override
-    public List<Pets> getAllEquipes() {
+    public List<Pets> getAllPets() {
         return petsRepository.findAll();
     }
 
@@ -57,5 +62,25 @@ public class PetServiceImpl implements IPetService {
     @Override
     public void deletePets(Long id) {
         petsRepository.deleteById(id);
+    }
+    public void generateAndStorePetEmbedding(Long petId, String description) {
+        Pets pet = petsRepository.findById(petId).orElseThrow();
+        float[] embedding = embeddingService.getEmbedding(description);
+        pet.setEmbedding(embedding);
+        petsRepository.save(pet);
+    }
+
+    @Override
+    @Transactional
+    public Pets updatePetDescription(Long petId, String description) {
+        Pets pet = petsRepository.findById(petId)
+                .orElseThrow(() -> new EntityNotFoundException("Pet not found"));
+        pet.setDescription(description);
+
+        // Generate and store embedding
+        generateAndStorePetEmbedding( petId,description);
+
+
+        return petsRepository.save(pet);
     }
 }

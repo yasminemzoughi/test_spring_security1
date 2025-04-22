@@ -4,12 +4,12 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import tn.esprit.entity.role.Role;
 import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
+import tn.esprit.service.embede.EmbeddingService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final EmbeddingService embeddingService;
 
     @Override
     public List<User> retrieveAllUsers() {
@@ -115,8 +115,14 @@ public class UserServiceImpl implements IUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.setBio(bio);
+        generateAndStoreUserEmbedding(userId, bio);
         return userRepository.save(user);
     }
-
+    public void generateAndStoreUserEmbedding(Long userId, String bio) {
+        User user = userRepository.findById(userId).orElseThrow();
+        float[] embedding = embeddingService.getEmbedding(bio);
+        user.setEmbedding(embedding);
+        userRepository.save(user);
+    }
 
 }
