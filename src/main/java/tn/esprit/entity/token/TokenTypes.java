@@ -1,4 +1,4 @@
-package tn.esprit.entity;
+package tn.esprit.entity.token;
 
 public enum TokenTypes {
     LOGIN_TOKEN,

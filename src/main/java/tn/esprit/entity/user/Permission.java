@@ -1,4 +1,4 @@
-package tn.esprit.entity;
+package tn.esprit.entity.user;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

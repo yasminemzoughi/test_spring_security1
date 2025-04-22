@@ -3,36 +3,29 @@ spring:
     active: dev
   main:
     allow-bean-definition-overriding: true
-
   servlet:
     multipart:
       max-file-size: 50MB
-
   application:
     name: user
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
-
   jpa:
     hibernate:
       ddl-auto: update
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
     open-in-view: false
-
   security:
     jwt:
       secret-key: ${SPRING_SECURITY_JWT_SECRET_KEY}
       expiration: ${SPRING_SECURITY_JWT_EXPIRATION}
-
   mailing:
     frontend:
       activation-url: ${SPRING_MAILING_FRONTEND_ACTIVATION_URL}
-
   mail:
     host: ${SPRING_MAIL_HOST}
     port: ${SPRING_MAIL_PORT}
@@ -53,6 +46,13 @@ app:
   admin:
     email: ${APP_ADMIN_EMAIL}
     password: ${APP_ADMIN_PASSWORD}
+  embedding:
+    service:
+      url: http://localhost:8000/embed
+      timeout-ms: 10000
+  openai:
+    api:
+      key: ${OPENAI_API_KEY}
 
 eureka:
   instance:
@@ -75,4 +75,3 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.validation: DEBUG
-

@@ -6,21 +6,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.dto.user.UserResponseDTO;
 import tn.esprit.dto.user.UserUpdateRequest;
-import tn.esprit.entity.Role;
-import tn.esprit.entity.User;
+import tn.esprit.entity.role.Role;
+import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
 import tn.esprit.service.IUserService;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 @RestController
@@ -28,28 +23,26 @@ import java.util.*;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private static final long MAX_IMAGE_SIZE = 5_242_880; // 5MB
-    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/user/uploads/";
-    private static final String IMAGE_URL_PREFIX = "/api/user/images/";
-
     private final IUserService userService;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
+    private final ImageController imageController;
 
     public UserController(IUserService userService,
                           RoleRepository roleRepository,
                           PasswordEncoder passwordEncoder,
                           ObjectMapper objectMapper,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          ImageController imageController) {
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = objectMapper;
         this.userRepository = userRepository;
+        this.imageController = imageController;
     }
-
 
     @GetMapping("/retrieve-user/{userId}")
     public ResponseEntity<?> retrieveUser(@PathVariable Long userId) {
@@ -89,13 +82,8 @@ public class UserController {
             }
 
             User existingUser = optionalUser.get();
-
-            // Parse JSON string to UserUpdateRequest
             UserUpdateRequest updateRequest = objectMapper.readValue(userJson, UserUpdateRequest.class);
 
-            // Check if email already exists (excluding the current user's email)
-
-            // Update fields only if new value is provided
             if (updateRequest.getFirstName() != null) {
                 existingUser.setFirstName(updateRequest.getFirstName());
             }
@@ -107,30 +95,24 @@ public class UserController {
                     return ResponseEntity.status(HttpStatus.CONFLICT)
                             .body(Map.of("error", "Email already in use"));
                 }
-                existingUser.setEmail(updateRequest.getEmail());}
-
+                existingUser.setEmail(updateRequest.getEmail());
+            }
             if (updateRequest.getPassword() != null) {
                 existingUser.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
             }
-
-            // Update role only if it's provided
             if (updateRequest.getRole() != null) {
                 Role role = roleRepository.findByName(updateRequest.getRole())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid role: " + updateRequest.getRole()));
                 existingUser.setRoles(Set.of(role));
             }
 
-            // Handle image upload if image provided
             if (image != null && !image.isEmpty()) {
-                String imageUrl = handleImageUpload(image, existingUser.getProfileImageUrl());
+                String imageUrl = imageController.handleImageUpload(image, existingUser.getProfileImageUrl());
                 existingUser.setProfileImageUrl(imageUrl);
             }
-            userRepository.save(existingUser); // Save the updated user to the database
 
-            // Save updated user
-            UserResponseDTO updatedUserResponse = UserResponseDTO.fromUser(existingUser);
-            return ResponseEntity.ok(updatedUserResponse);
-
+            userRepository.save(existingUser);
+            return ResponseEntity.ok(UserResponseDTO.fromUser(existingUser));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -143,53 +125,4 @@ public class UserController {
                     .body(Map.of("error", "Update failed", "details", e.getMessage()));
         }
     }
-
-
-    private String handleImageUpload(MultipartFile image, String currentImageUrl) throws IOException {
-        validateImageFile(image);
-
-        // Delete old image if exists
-        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-            deleteOldImage(currentImageUrl);
-        }
-
-        String fileName = saveImageFile(image);
-        return IMAGE_URL_PREFIX + fileName;
-    }
-
-    // Add logging for debugging
-    private String saveImageFile(MultipartFile image) throws IOException {
-        String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(image.getOriginalFilename()));
-        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String fileName = UUID.randomUUID() + fileExtension;
-        Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
-        Files.createDirectories(uploadPath);
-        Path filePath = uploadPath.resolve(fileName).normalize();
-
-        if (!filePath.getParent().equals(uploadPath)) {
-            throw new IOException("Invalid file path");
-        }
-
-        image.transferTo(filePath);
-        System.out.println("Image saved to: " + filePath.toString());
-        return fileName;
-    }
-
-    private void validateImageFile(MultipartFile image) {
-        if (!image.getContentType().startsWith("image/")) {
-            throw new IllegalArgumentException("Only image files are allowed");
-        }
-        if (image.getSize() > MAX_IMAGE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds maximum allowed (5MB)");
-        }
-    }
-
-    private void deleteOldImage(String imageUrl) throws IOException {
-        String oldFileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-        Path oldImagePath = Paths.get(UPLOAD_DIR).resolve(oldFileName);
-        Files.deleteIfExists(oldImagePath);
-    }
-
-
-
 }

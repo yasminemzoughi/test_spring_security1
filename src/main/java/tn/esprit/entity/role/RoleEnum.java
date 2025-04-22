@@ -1,8 +1,9 @@
-package tn.esprit.entity;
+package tn.esprit.entity.role;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import tn.esprit.entity.user.Permission;
 
 import java.util.Collections;
 import java.util.List;

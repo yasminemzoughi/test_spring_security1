@@ -2,7 +2,7 @@ package tn.esprit.dto.auth;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-import tn.esprit.entity.RoleEnum;
+import tn.esprit.entity.role.RoleEnum;
 
 @Data
 @Builder

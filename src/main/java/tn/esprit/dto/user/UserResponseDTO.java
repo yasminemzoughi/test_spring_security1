@@ -1,7 +1,7 @@
 package tn.esprit.dto.user;
 
 import lombok.Data;
-import tn.esprit.entity.User;
+import tn.esprit.entity.user.User;
 
 import java.util.Set;
 import java.util.stream.Collectors;

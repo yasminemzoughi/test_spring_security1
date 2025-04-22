@@ -14,8 +14,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import tn.esprit.entity.Token;
-import tn.esprit.entity.TokenTypes;
+import tn.esprit.entity.token.Token;
+import tn.esprit.entity.token.TokenTypes;
 import tn.esprit.repository.TokenRepository;
 
 import java.io.IOException;

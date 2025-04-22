@@ -3,8 +3,7 @@ package tn.esprit.service;
 
 
 import org.springframework.http.ResponseEntity;
-import tn.esprit.dto.user.UserUpdateRequest;
-import tn.esprit.entity.User;
+import tn.esprit.entity.user.User;
 
 import java.util.List;
 

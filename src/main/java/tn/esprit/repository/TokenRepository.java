@@ -2,9 +2,9 @@ package tn.esprit.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import tn.esprit.entity.Token;
-import tn.esprit.entity.TokenTypes;
-import tn.esprit.entity.User;
+import tn.esprit.entity.token.Token;
+import tn.esprit.entity.token.TokenTypes;
+import tn.esprit.entity.user.User;
 
 import java.time.LocalDateTime;
 import java.util.List;

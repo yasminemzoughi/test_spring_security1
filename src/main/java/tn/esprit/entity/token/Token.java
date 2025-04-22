@@ -1,9 +1,9 @@
-package tn.esprit.entity;
+package tn.esprit.entity.token;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import tn.esprit.entity.token.TokenTypes;
+import tn.esprit.entity.user.User;
 
 import java.time.LocalDateTime;
 

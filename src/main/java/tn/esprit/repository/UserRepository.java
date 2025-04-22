@@ -3,9 +3,7 @@ package tn.esprit.repository;
 import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import tn.esprit.entity.Role;
-import tn.esprit.entity.RoleEnum;
-import tn.esprit.entity.User;
+import tn.esprit.entity.user.User;
 
 import java.util.Optional;
 

@@ -1,10 +1,8 @@
-package tn.esprit.entity;
+package tn.esprit.entity.role;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.FetchMode;
-import org.hibernate.annotations.Fetch;
-import tn.esprit.entity.Permission;
+import tn.esprit.entity.user.Permission;
 
 import java.util.HashSet;
 import java.util.Set;

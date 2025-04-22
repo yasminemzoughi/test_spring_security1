@@ -2,9 +2,7 @@ package tn.esprit.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;
-import tn.esprit.entity.RoleEnum;
-
-import java.util.Set;
+import tn.esprit.entity.role.RoleEnum;
 
 @Getter
 @Setter
