@@ -84,6 +84,9 @@ public class UserController {
             User existingUser = optionalUser.get();
             UserUpdateRequest updateRequest = objectMapper.readValue(userJson, UserUpdateRequest.class);
 
+            // Debug the received bio value
+            System.out.println("Received bio: " + updateRequest.getBio());
+
             if (updateRequest.getFirstName() != null) {
                 existingUser.setFirstName(updateRequest.getFirstName());
             }
@@ -105,7 +108,10 @@ public class UserController {
                         .orElseThrow(() -> new IllegalArgumentException("Invalid role: " + updateRequest.getRole()));
                 existingUser.setRoles(Set.of(role));
             }
-
+            if (updateRequest.getBio() != null) {
+                // Set bio directly instead of calling a separate method
+                existingUser.setBio(updateRequest.getBio());
+            }
             if (image != null && !image.isEmpty()) {
                 String imageUrl = imageController.handleImageUpload(image, existingUser.getProfileImageUrl());
                 existingUser.setProfileImageUrl(imageUrl);

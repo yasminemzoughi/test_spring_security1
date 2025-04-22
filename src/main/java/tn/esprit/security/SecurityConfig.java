@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/auth/activate",
                                 "/api/user/uploads/**",
-                                "/api/user/images/**"
+                                "/api/user/images/**",
+                                "/api/pets/**"
 
 
                         ).permitAll()

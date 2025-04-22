@@ -12,9 +12,11 @@ public class UserResponseDTO {
     private String firstName;
     private String lastName;
     private String email;
+    private String bio;
+
     private Set<String> roles;
     private boolean enabled;
-    private String profileImageUrl;  // Add this field for the image URL
+    private String profileImageUrl;
 
     // Static conversion method
     public static UserResponseDTO fromUser(User user) {
@@ -24,7 +26,9 @@ public class UserResponseDTO {
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
         dto.setEnabled(user.isEnabled());
-        dto.setProfileImageUrl(user.getProfileImageUrl()); // Ensure this maps correctly
+        dto.setProfileImageUrl(user.getProfileImageUrl());
+        dto.setBio(user.getBio());  // Correct setter method for bio
+
         dto.setRoles(user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet()));

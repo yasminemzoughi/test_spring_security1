@@ -35,13 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/register",
             "/api/auth/login",
             "/api/auth/activate",
-            "/api/user/images/**");
+            "/api/user/images/**",
+           "/api/pets/**");
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.startsWith("/api/user/images/");
+        return path.startsWith("/api/user/images/") || path.startsWith("/api/pets/") ;
     }
-
         @Override
         protected void doFilterInternal(
                 @NonNull HttpServletRequest request,

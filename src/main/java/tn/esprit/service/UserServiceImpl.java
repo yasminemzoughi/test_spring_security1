@@ -55,18 +55,32 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public User updateUser(User user) {
-        // Get the current user from database to compare emails
         User existingUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Only validate email if it's being changed
+        // Email update logic
         if (user.getEmail() != null && !user.getEmail().equals(existingUser.getEmail())) {
             if (emailExists(user.getEmail())) {
                 throw new RuntimeException("Email already in use");
             }
+            existingUser.setEmail(user.getEmail());
         }
 
-        return userRepository.save(user);
+        // Update other fields
+        if (user.getFirstName() != null) {
+            existingUser.setFirstName(user.getFirstName());
+        }
+        if (user.getLastName() != null) {
+            existingUser.setLastName(user.getLastName());
+        }
+        if (user.getBio() != null) {
+            existingUser.setBio(user.getBio());
+        }
+        if (user.getProfileImageUrl() != null) {
+            existingUser.setProfileImageUrl(user.getProfileImageUrl());
+        }
+
+        return userRepository.save(existingUser);
     }
     @Override
     @Transactional
@@ -90,6 +104,18 @@ public class UserServiceImpl implements IUserService {
             validRoles.add(existingRole);
         }
         return validRoles;
+    }
+    @Override
+    @Transactional
+    public User updateUserBio(Long userId, String bio) {
+        if (bio.length() > 500) {
+            throw new IllegalArgumentException("Bio is too long");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        user.setBio(bio);
+        return userRepository.save(user);
     }
 
 

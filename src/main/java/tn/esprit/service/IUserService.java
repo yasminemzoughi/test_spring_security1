@@ -17,5 +17,7 @@ public interface IUserService {
     User updateUser(User user);
     boolean emailExists(String email);
     User updateUserProfileImage(Long userId, String imageUrl) ;
+    public User updateUserBio(Long userId, String bio);
+
 
     }
