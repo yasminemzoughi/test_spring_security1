@@ -108,21 +108,24 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public User updateUserBio(Long userId, String bio) {
-        if (bio.length() > 500) {
-            throw new IllegalArgumentException("Bio is too long");
+        if (bio == null || bio.isBlank()) {
+            throw new IllegalArgumentException("Bio cannot be empty");
+        }
+
+        if (bio.length() > 1000) {
+            throw new IllegalArgumentException("Bio exceeds maximum length of 1000 characters");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        user.setBio(bio);
-        generateAndStoreUserEmbedding(userId, bio);
+
+        // Only update if bio changed
+        if (!bio.equals(user.getBio())) {
+            user.setBio(bio);
+            float[] embedding = embeddingService.getEmbedding(bio);  // Changed from generateEmbedding to getEmbedding
+            user.setBioEmbedding(embedding);
+        }
+
         return userRepository.save(user);
     }
-    public void generateAndStoreUserEmbedding(Long userId, String bio) {
-        User user = userRepository.findById(userId).orElseThrow();
-        float[] embedding = embeddingService.getEmbedding(bio);
-        user.setEmbedding(embedding);
-        userRepository.save(user);
-    }
-
 }

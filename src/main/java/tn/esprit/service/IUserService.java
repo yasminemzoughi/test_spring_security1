@@ -17,8 +17,7 @@ public interface IUserService {
     User updateUser(User user);
     boolean emailExists(String email);
     User updateUserProfileImage(Long userId, String imageUrl) ;
-    public User updateUserBio(Long userId, String bio);
-    void generateAndStoreUserEmbedding(Long userId, String bio);
+     User updateUserBio(Long userId, String bio);
 
 
     }

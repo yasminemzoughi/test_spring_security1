@@ -1,6 +1,8 @@
 package tn.esprit.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,15 +11,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import tn.esprit.entity.role.Role;
 import tn.esprit.entity.token.Token;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.*;
 
 @Entity
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
 public class User implements UserDetails {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String firstName;
@@ -41,7 +43,8 @@ public class User implements UserDetails {
 
     // Profile Info
     private String profileImageUrl;
-    @Column(length = 1000) // Extended length for bio
+
+    @Column(length = 1000)
     private String bio;
 
     // Roles and Permissions
@@ -53,72 +56,70 @@ public class User implements UserDetails {
     )
     private Set<Role> roles = new HashSet<>();
 
-    // AI Embedding Storage (Optimized)
-    @Lob
-    @Basic(fetch = FetchType.LAZY) // Lazy load for performance
-    @Column(columnDefinition = "LONGBLOB")
-    @JsonIgnore
-    private byte[] embedding;
-
-
+    // AI Embedding Storage
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = FloatArrayConverter.class)
+    private float[] bioEmbedding;
 
     // Security Methods
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();
-
         for (Role role : roles) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
-
             role.getPermissions().stream()
                     .map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
                     .forEach(authorities::add);
         }
-
-        System.out.println("User authorities: " + authorities);
-
         return authorities;
     }
 
     @Override
-    public String getUsername() { return email; }
+    @JsonIgnore
+    public String getUsername() {
+        return email;
+    }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
     @Override
-    public boolean isAccountNonLocked() { return !accountLocked; }
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return !accountLocked;
+    }
 
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    // Embedding Helpers (Thread-safe)
-  public void setEmbedding(float[] floats) {
-        Objects.requireNonNull(floats, "Embedding array cannot be null");
-        this.embedding = floatToByteArray(floats);
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return true;
     }
 
+    // FloatArrayConverter as a static inner class
+    @Converter
+    public static class FloatArrayConverter implements AttributeConverter<float[], String> {
+        private static final ObjectMapper mapper = new ObjectMapper();
 
+        @Override
+        public String convertToDatabaseColumn(float[] attribute) {
+            try {
+                return attribute != null ? mapper.writeValueAsString(attribute) : null;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to convert float array to JSON", e);
+            }
+        }
 
-    @Transient
-    public float[] getEmbeddingAsFloats() {
-        return byteToFloatArray(this.embedding);
+        @Override
+        public float[] convertToEntityAttribute(String dbData) {
+            try {
+                return dbData != null ? mapper.readValue(dbData, float[].class) : null;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to convert JSON to float array", e);
+            }
+        }
     }
-
-    // Static conversion utilities
-    public static byte[] floatToByteArray(float[] floats) {
-        ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES);
-        buffer.asFloatBuffer().put(floats);
-        return buffer.array();
-    }
-
-    public static float[] byteToFloatArray(byte[] bytes) {
-        if (bytes == null) return null;
-        FloatBuffer buffer = ByteBuffer.wrap(bytes).asFloatBuffer();
-        float[] floats = new float[buffer.remaining()];
-        buffer.get(floats);
-        return floats;
-    }
-
-
 }

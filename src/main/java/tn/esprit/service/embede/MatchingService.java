@@ -20,28 +20,19 @@ public class MatchingService {
     private final EmbeddingService embeddingService;
 
     public List<Pets> findTopMatches(Long userId, int limit) {
-
-        // Validate input
-        if (limit <= 0) throw new IllegalArgumentException("Limit must be positive");
-
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Verify user has an embedding
-        if (user.getEmbeddingAsFloats() == null) {
-            throw new IllegalStateException("User has no embedding");
+        if (user.getBio() == null || user.getBio().isEmpty() || user.getBioEmbedding() == null) {
+            return getFallbackPets(limit);
         }
 
         return petsRepo.findByForAdoptionTrue().stream()
-                .filter(pet -> pet.getEmbeddingAsFloats() != null) // Only pets with embeddings
+                .filter(pet -> pet.getDescription() != null && !pet.getDescription().isEmpty())
+                .filter(pet -> pet.getEmbedding() != null)  // Now checks float[] directly
                 .peek(pet -> {
-                    float[] petEmbedding = pet.getEmbeddingAsFloats();
-                    float[] userEmbedding = user.getEmbeddingAsFloats();
-
-                    if (petEmbedding.length != userEmbedding.length) {
-                        throw new IllegalStateException("Embedding dimension mismatch");
-                    }
-
+                    float[] petEmbedding = pet.getEmbedding();  // Direct access
+                    float[] userEmbedding = user.getBioEmbedding();
                     pet.setSimilarityScore(
                             VectorUtils.cosineSimilarity(userEmbedding, petEmbedding)
                     );
@@ -49,5 +40,9 @@ public class MatchingService {
                 .sorted(Comparator.comparingDouble(Pets::getSimilarityScore).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    private List<Pets> getFallbackPets(int limit) {
+        return petsRepo.findRandomPets(limit);
     }
 }

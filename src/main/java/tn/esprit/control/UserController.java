@@ -2,6 +2,8 @@ package tn.esprit.control;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.*;
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/user")
+@AllArgsConstructor
 public class UserController {
 
     private final IUserService userService;
@@ -30,28 +33,13 @@ public class UserController {
     private final UserRepository userRepository;
     private final ImageController imageController;
 
-    public UserController(IUserService userService,
-                          RoleRepository roleRepository,
-                          PasswordEncoder passwordEncoder,
-                          ObjectMapper objectMapper,
-                          UserRepository userRepository,
-                          ImageController imageController) {
-        this.userService = userService;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.objectMapper = objectMapper;
-        this.userRepository = userRepository;
-        this.imageController = imageController;
-    }
-
     @GetMapping("/retrieve-user/{userId}")
     public ResponseEntity<?> retrieveUser(@PathVariable Long userId) {
         try {
             User user = userService.retrieveUser(userId);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
             return ResponseEntity.ok(UserResponseDTO.fromUser(user));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving user");
@@ -61,7 +49,7 @@ public class UserController {
     @DeleteMapping("/remove-user/{userId}")
     public ResponseEntity<?> removeUser(@PathVariable Long userId) {
         try {
-            return ResponseEntity.ok(userService.removeUser(userId));
+            return userService.removeUser(userId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error deleting user");
@@ -75,24 +63,18 @@ public class UserController {
             @RequestPart(value = "image", required = false) MultipartFile image) {
 
         try {
-            Optional<User> optionalUser = userRepository.findById(userId);
-            if (optionalUser.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "User not found"));
-            }
-
-            User existingUser = optionalUser.get();
+            User existingUser = userService.retrieveUser(userId);
             UserUpdateRequest updateRequest = objectMapper.readValue(userJson, UserUpdateRequest.class);
 
-            // Debug the received bio value
-            System.out.println("Received bio: " + updateRequest.getBio());
-
+            // Update basic fields
             if (updateRequest.getFirstName() != null) {
                 existingUser.setFirstName(updateRequest.getFirstName());
             }
             if (updateRequest.getLastName() != null) {
                 existingUser.setLastName(updateRequest.getLastName());
             }
+
+            // Handle email update
             if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(existingUser.getEmail())) {
                 if (userRepository.existsByEmail(updateRequest.getEmail())) {
                     return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -100,35 +82,45 @@ public class UserController {
                 }
                 existingUser.setEmail(updateRequest.getEmail());
             }
+
+            // Handle password update
             if (updateRequest.getPassword() != null) {
                 existingUser.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
             }
+
+            // Handle role update
             if (updateRequest.getRole() != null) {
                 Role role = roleRepository.findByName(updateRequest.getRole())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid role: " + updateRequest.getRole()));
                 existingUser.setRoles(Set.of(role));
             }
+
+            // Handle bio update
             if (updateRequest.getBio() != null) {
-                // Set bio directly instead of calling a separate method
-                existingUser.setBio(updateRequest.getBio());
+                existingUser = userService.updateUserBio(userId, updateRequest.getBio());
             }
+
+            // Handle image update
             if (image != null && !image.isEmpty()) {
                 String imageUrl = imageController.handleImageUpload(image, existingUser.getProfileImageUrl());
                 existingUser.setProfileImageUrl(imageUrl);
             }
 
-            userRepository.save(existingUser);
-            return ResponseEntity.ok(UserResponseDTO.fromUser(existingUser));
+            // Save final changes
+            User updatedUser = userRepository.save(existingUser);
+            return ResponseEntity.ok(UserResponseDTO.fromUser(updatedUser));
 
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid role", "details", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         } catch (JsonProcessingException e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid JSON", "details", e.getMessage()));
+                    .body(Map.of("error", "Invalid JSON format"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Update failed", "details", e.getMessage()));
+                    .body(Map.of("error", "Update failed: " + e.getMessage()));
         }
     }
 }

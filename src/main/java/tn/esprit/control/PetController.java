@@ -1,7 +1,5 @@
 package tn.esprit.control;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +53,16 @@ public class PetController {
     public ResponseEntity<Void> deletePet(@PathVariable Long id) {
         petService.deletePets(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/get_random_pets")
+    public ResponseEntity<List<Pets>> getRandomPets(
+            @RequestParam(defaultValue = "3") int limit) {
+        try {
+            return ResponseEntity.ok(petService.findRandomPets(limit));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 }

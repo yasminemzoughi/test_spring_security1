@@ -21,6 +21,7 @@ public class PetServiceImpl implements IPetService {
     private PetsRepository petsRepository;
 
     private final EmbeddingService embeddingService;
+
     @Override
     public List<Pets> getAllPets() {
         return petsRepository.findAll();
@@ -51,7 +52,6 @@ public class PetServiceImpl implements IPetService {
             existingPet.setDescription(updatedPet.getDescription());
             existingPet.setImagePath(updatedPet.getImagePath());
             existingPet.setOwnerId(updatedPet.getOwnerId());
-            existingPet.setEmbedding(updatedPet.getEmbeddingAsFloats());
             existingPet.setSimilarityScore(updatedPet.getSimilarityScore());
 
             return petsRepository.save(existingPet);
@@ -63,6 +63,7 @@ public class PetServiceImpl implements IPetService {
     public void deletePets(Long id) {
         petsRepository.deleteById(id);
     }
+
     public void generateAndStorePetEmbedding(Long petId, String description) {
         Pets pet = petsRepository.findById(petId).orElseThrow();
         float[] embedding = embeddingService.getEmbedding(description);
@@ -78,9 +79,17 @@ public class PetServiceImpl implements IPetService {
         pet.setDescription(description);
 
         // Generate and store embedding
-        generateAndStorePetEmbedding( petId,description);
+        generateAndStorePetEmbedding(petId, description);
 
 
         return petsRepository.save(pet);
+    }
+
+    @Override
+    public List<Pets> findRandomPets(int limit) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit must be positive");
+        }
+        return petsRepository.findRandomPets(limit);
     }
 }

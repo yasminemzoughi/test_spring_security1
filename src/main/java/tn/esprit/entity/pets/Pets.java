@@ -1,10 +1,14 @@
 package tn.esprit.entity.pets;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import jakarta.persistence.Transient;
+import tn.esprit.entity.user.User;
+
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
@@ -39,43 +43,42 @@ public class Pets {
     private Long ownerId;
 
     // AI Integration
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(columnDefinition = "LONGBLOB")
-    private byte[] embedding;
+    @Column(columnDefinition = "TEXT", length = 8000)
+    @Convert(converter = FloatArrayConverter.class)
+    private float[] embedding;
 
+    @Transient  // Mark as transient if not persisted
     private Double similarityScore;
 
-    // Helper method to set score
+    // Validated setter
     public void setSimilarityScore(double score) {
+        if (score < -1 || score > 1) {
+            throw new IllegalArgumentException("Score must be between -1 and 1");
+        }
         this.similarityScore = score;
     }
 
-    // Helper Methods for Embeddings
-    public void setEmbedding(float[] floats) {
-        this.embedding = floatToByteArray(floats);
+    // Shared converter (define in your utils package)
+    @Converter
+    public static class FloatArrayConverter implements AttributeConverter<float[], String> {
+        private static final ObjectMapper mapper = new ObjectMapper();
+
+        @Override
+        public String convertToDatabaseColumn(float[] attribute) {
+            try {
+                return attribute != null ? mapper.writeValueAsString(attribute) : null;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to convert float array to JSON", e);
+            }
+        }
+
+        @Override
+        public float[] convertToEntityAttribute(String dbData) {
+            try {
+                return dbData != null ? mapper.readValue(dbData, float[].class) : null;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to convert JSON to float array", e);
+            }
+        }
     }
-
-    @Transient
-    public float[] getEmbeddingAsFloats() {
-        return byteToFloatArray(this.embedding);
-    }
-
-    // Static conversion utilities
-    public static byte[] floatToByteArray(float[] floats) {
-        if (floats == null) return null;
-        ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES);
-        buffer.asFloatBuffer().put(floats);
-        return buffer.array();
-    }
-
-    public static float[] byteToFloatArray(byte[] bytes) {
-        if (bytes == null) return null;
-        FloatBuffer buffer = ByteBuffer.wrap(bytes).asFloatBuffer();
-        float[] floats = new float[buffer.remaining()];
-        buffer.get(floats);
-        return floats;
-    }
-
-
 }
