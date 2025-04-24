@@ -10,14 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import tn.esprit.dto.user.AdoptionPreferencesDTO;
+import tn.esprit.dto.matching.MatchRequestDTO;
 import tn.esprit.dto.user.UserResponseDTO;
 import tn.esprit.dto.user.UserUpdateRequest;
 import tn.esprit.entity.role.Role;
 import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
-import tn.esprit.service.IUserService;
+import tn.esprit.service.user.IUserService;
 
 import java.util.*;
 
@@ -127,8 +127,8 @@ public class UserController {
     // Endpoint to update adoption preferences
     @PostMapping("/{userId}/adoptionPreferences")
     public User updateAdoptionPreferences(@PathVariable Long userId,
-                                          @RequestBody AdoptionPreferencesDTO preferencesDTO) {
-        return userService.updateAdoptionPreferences(userId, preferencesDTO);
+                                          @RequestBody MatchRequestDTO.UserProfile userPref) {
+        return userService.updateAdoptionPreferences(userId, userPref);
     }
 
 

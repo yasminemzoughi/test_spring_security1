@@ -1,4 +1,4 @@
-package tn.esprit.service;
+package tn.esprit.service.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,12 +7,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import tn.esprit.dto.user.AdoptionPreferencesDTO;
+import tn.esprit.dto.matching.MatchRequestDTO;
 import tn.esprit.entity.role.Role;
 import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -127,7 +128,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public User updateAdoptionPreferences(Long userId, AdoptionPreferencesDTO preferencesDTO) {
+    public User updateAdoptionPreferences(Long userId, MatchRequestDTO.UserProfile preferencesDTO) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
@@ -135,7 +136,7 @@ public class UserServiceImpl implements IUserService {
         Map<String, String> preferencesMap = new HashMap<>();
         preferencesMap.put("lifestyle", preferencesDTO.getLifestyle());
         preferencesMap.put("experience", preferencesDTO.getExperience());
-        preferencesMap.put("livingSpace", preferencesDTO.getLivingSpace());
+        preferencesMap.put("living_space", preferencesDTO.getLiving_space()); // Changed from livingSpace to living_space
         preferencesMap.put("preferences", preferencesDTO.getPreferences());
 
         // Convert map to JSON and update user

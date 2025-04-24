@@ -10,7 +10,7 @@ import tn.esprit.entity.role.Role;
 import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
-import tn.esprit.service.IUserService;
+import tn.esprit.service.user.IUserService;
 
 import java.util.List;
 import java.util.Map;

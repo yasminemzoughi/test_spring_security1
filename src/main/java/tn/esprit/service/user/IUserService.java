@@ -1,9 +1,9 @@
-package tn.esprit.service;
+package tn.esprit.service.user;
 
 
 
 import org.springframework.http.ResponseEntity;
-import tn.esprit.dto.user.AdoptionPreferencesDTO;
+import tn.esprit.dto.matching.MatchRequestDTO;
 import tn.esprit.entity.user.User;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public interface IUserService {
     boolean emailExists(String email);
     User updateUserProfileImage(Long userId, String imageUrl) ;
      User updateUserBio(Long userId, String bio);
-    public User updateAdoptionPreferences(Long userId, AdoptionPreferencesDTO preferencesDTO) ;
+     User updateAdoptionPreferences(Long userId, MatchRequestDTO.UserProfile preferencesDTO) ;
      Map<String, String> getAdoptionPreferences(Long userId) ;
 
     }

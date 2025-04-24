@@ -25,6 +25,13 @@ public class PetServiceImpl implements IPetService {
         return petsRepository.findAll();
     }
 
+
+   @Override
+   public List<Pets> getAllPetsForAdoption() {
+        // Fetch all pets where 'forAdoption' is true
+        return petsRepository.findByForAdoptionTrue();
+    }
+
     @Override
     public Pets getPetsById(Long id) {
         return petsRepository.findById(id).orElse(null);
@@ -50,7 +57,6 @@ public class PetServiceImpl implements IPetService {
             existingPet.setDescription(updatedPet.getDescription());
             existingPet.setImagePath(updatedPet.getImagePath());
             existingPet.setOwnerId(updatedPet.getOwnerId());
-       //     existingPet.setSimilarityScore(updatedPet.getSimilarityScore());
 
             return petsRepository.save(existingPet);
         }
@@ -62,12 +68,6 @@ public class PetServiceImpl implements IPetService {
         petsRepository.deleteById(id);
     }
 
-  public void generateAndStorePetEmbedding(Long petId, String description) {
-//        Pets pet = petsRepository.findById(petId).orElseThrow();
-//        float[] embedding = embeddingService.getEmbedding(description);
-//        pet.setEmbedding(embedding);
-//        petsRepository.save(pet);
- }
 
     @Override
     @Transactional
@@ -75,11 +75,6 @@ public class PetServiceImpl implements IPetService {
         Pets pet = petsRepository.findById(petId)
                 .orElseThrow(() -> new EntityNotFoundException("Pet not found"));
         pet.setDescription(description);
-
-        // Generate and store embedding
-        generateAndStorePetEmbedding(petId, description);
-
-
         return petsRepository.save(pet);
     }
 
@@ -90,4 +85,5 @@ public class PetServiceImpl implements IPetService {
         }
         return petsRepository.findRandomPets(limit);
     }
+
 }
