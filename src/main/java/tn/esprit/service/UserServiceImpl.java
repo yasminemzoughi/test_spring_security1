@@ -1,26 +1,30 @@
 package tn.esprit.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import tn.esprit.dto.user.AdoptionPreferencesDTO;
 import tn.esprit.entity.role.Role;
 import tn.esprit.entity.user.User;
 import tn.esprit.repository.RoleRepository;
 import tn.esprit.repository.UserRepository;
-import tn.esprit.service.embede.EmbeddingService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
+import java.util.HashMap;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final EmbeddingService embeddingService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public List<User> retrieveAllUsers() {
@@ -108,24 +112,62 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public User updateUserBio(Long userId, String bio) {
-        if (bio == null || bio.isBlank()) {
-            throw new IllegalArgumentException("Bio cannot be empty");
-        }
-
-        if (bio.length() > 1000) {
+        if (bio != null && bio.length() > 1000) {
             throw new IllegalArgumentException("Bio exceeds maximum length of 1000 characters");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Only update if bio changed
-        if (!bio.equals(user.getBio())) {
-            user.setBio(bio);
-            float[] embedding = embeddingService.getEmbedding(bio);  // Changed from generateEmbedding to getEmbedding
-            user.setBioEmbedding(embedding);
+        if (!Objects.equals(bio, user.getBio())) {
+            user.setBio(bio); // this allows null or ""
         }
-
         return userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public User updateAdoptionPreferences(Long userId, AdoptionPreferencesDTO preferencesDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        // Create a map of preferences
+        Map<String, String> preferencesMap = new HashMap<>();
+        preferencesMap.put("lifestyle", preferencesDTO.getLifestyle());
+        preferencesMap.put("experience", preferencesDTO.getExperience());
+        preferencesMap.put("livingSpace", preferencesDTO.getLivingSpace());
+        preferencesMap.put("preferences", preferencesDTO.getPreferences());
+
+        // Convert map to JSON and update user
+        try {
+            String jsonPreferences = objectMapper.writeValueAsString(preferencesMap);
+            user.setAdoptionPreferences(jsonPreferences);
+            return userRepository.save(user);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error processing adoption preferences", e);
+        }
+    }
+
+
+    public Map<String, String> getAdoptionPreferences(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            // No check on user.isAdopting()
+            try {
+                // Return an empty map if the user doesn't have adoption preferences
+                if (user.getAdoptionPreferences() == null || user.getAdoptionPreferences().isEmpty()) {
+                    return new HashMap<>();
+                }
+
+                // Convert the JSON string back to a Map
+                return objectMapper.readValue(user.getAdoptionPreferences(), new TypeReference<>() {});
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error retrieving adoption preferences", e);
+            }
+        } else {
+            throw new RuntimeException("User not found with id " + userId);
+        }
+    }
+
 }

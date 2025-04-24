@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.esprit.entity.pets.Pets;
 import tn.esprit.repository.PetsRepository;
-import tn.esprit.service.embede.EmbeddingService;
 
 import java.util.List;
 
@@ -20,7 +19,6 @@ public class PetServiceImpl implements IPetService {
     @Autowired
     private PetsRepository petsRepository;
 
-    private final EmbeddingService embeddingService;
 
     @Override
     public List<Pets> getAllPets() {
@@ -52,7 +50,7 @@ public class PetServiceImpl implements IPetService {
             existingPet.setDescription(updatedPet.getDescription());
             existingPet.setImagePath(updatedPet.getImagePath());
             existingPet.setOwnerId(updatedPet.getOwnerId());
-            existingPet.setSimilarityScore(updatedPet.getSimilarityScore());
+       //     existingPet.setSimilarityScore(updatedPet.getSimilarityScore());
 
             return petsRepository.save(existingPet);
         }
@@ -64,12 +62,12 @@ public class PetServiceImpl implements IPetService {
         petsRepository.deleteById(id);
     }
 
-    public void generateAndStorePetEmbedding(Long petId, String description) {
-        Pets pet = petsRepository.findById(petId).orElseThrow();
-        float[] embedding = embeddingService.getEmbedding(description);
-        pet.setEmbedding(embedding);
-        petsRepository.save(pet);
-    }
+  public void generateAndStorePetEmbedding(Long petId, String description) {
+//        Pets pet = petsRepository.findById(petId).orElseThrow();
+//        float[] embedding = embeddingService.getEmbedding(description);
+//        pet.setEmbedding(embedding);
+//        petsRepository.save(pet);
+ }
 
     @Override
     @Transactional

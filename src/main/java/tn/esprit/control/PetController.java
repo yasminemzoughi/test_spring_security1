@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import tn.esprit.entity.pets.Pets;
 import tn.esprit.repository.PetsRepository;
 import tn.esprit.service.Pet.IPetService;
-import tn.esprit.service.embede.EmbeddingService;
 
 import java.util.List;
 
@@ -19,7 +18,6 @@ public class PetController {
     @Autowired
     private IPetService petService;
     private  final PetsRepository petsRepository;
-    private final EmbeddingService embeddingService;
 
 
     // Get all pets

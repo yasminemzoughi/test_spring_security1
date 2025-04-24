@@ -1,8 +1,6 @@
 package tn.esprit.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -36,13 +34,16 @@ public class User implements UserDetails {
     private boolean enabled = true;
     private boolean accountLocked = false;
 
+    // Profile Info
+    private String profileImageUrl;
+    private boolean isAdopting = true;
+    @Column(columnDefinition = "TEXT")
+    private String adoptionPreferences;
+
     // Security Tokens
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Token> tokens = new ArrayList<>();
-
-    // Profile Info
-    private String profileImageUrl;
 
     @Column(length = 1000)
     private String bio;
@@ -55,12 +56,6 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-
-    // AI Embedding Storage
-    @Column(columnDefinition = "TEXT")
-    @Convert(converter = FloatArrayConverter.class)
-    private float[] bioEmbedding;
-
     // Security Methods
     @Override
     @JsonIgnore
@@ -97,29 +92,5 @@ public class User implements UserDetails {
     @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
-    }
-
-    // FloatArrayConverter as a static inner class
-    @Converter
-    public static class FloatArrayConverter implements AttributeConverter<float[], String> {
-        private static final ObjectMapper mapper = new ObjectMapper();
-
-        @Override
-        public String convertToDatabaseColumn(float[] attribute) {
-            try {
-                return attribute != null ? mapper.writeValueAsString(attribute) : null;
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to convert float array to JSON", e);
-            }
-        }
-
-        @Override
-        public float[] convertToEntityAttribute(String dbData) {
-            try {
-                return dbData != null ? mapper.readValue(dbData, float[].class) : null;
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to convert JSON to float array", e);
-            }
-        }
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.dto.user.AdoptionPreferencesDTO;
 import tn.esprit.dto.user.UserResponseDTO;
 import tn.esprit.dto.user.UserUpdateRequest;
 import tn.esprit.entity.role.Role;
@@ -84,7 +85,7 @@ public class UserController {
             }
 
             // Handle password update
-            if (updateRequest.getPassword() != null) {
+            if (updateRequest.getPassword() != null && !updateRequest.getPassword().isEmpty()) {
                 existingUser.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
             }
 
@@ -99,7 +100,6 @@ public class UserController {
             if (updateRequest.getBio() != null) {
                 existingUser = userService.updateUserBio(userId, updateRequest.getBio());
             }
-
             // Handle image update
             if (image != null && !image.isEmpty()) {
                 String imageUrl = imageController.handleImageUpload(image, existingUser.getProfileImageUrl());
@@ -123,4 +123,19 @@ public class UserController {
                     .body(Map.of("error", "Update failed: " + e.getMessage()));
         }
     }
+
+    // Endpoint to update adoption preferences
+    @PostMapping("/{userId}/adoptionPreferences")
+    public User updateAdoptionPreferences(@PathVariable Long userId,
+                                          @RequestBody AdoptionPreferencesDTO preferencesDTO) {
+        return userService.updateAdoptionPreferences(userId, preferencesDTO);
+    }
+
+
+    // Endpoint to get adoption preferences
+    @GetMapping("/{userId}/adoptionPreferences")
+    public Map<String, String> getAdoptionPreferences(@PathVariable Long userId) {
+        return userService.getAdoptionPreferences(userId);
+    }
+
 }
