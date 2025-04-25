@@ -20,8 +20,6 @@ public class Pets {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // Basic Information
     private String name;
     private String species;
     private int age;

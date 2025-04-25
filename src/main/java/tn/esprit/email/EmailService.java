@@ -26,6 +26,9 @@ public class EmailService {
     @Value("${mailing.frontend.activation-url:http://localhost:4200/activate_account}")
     private String frontendActivationUrl;
 
+    @Value("${mailing.frontend.reset-url:http://localhost:4200/reset-password}")
+    private String frontendResetUrl;
+
     @Async
     public void sendActivationEmail(String to, String username, String activationCode)
             throws MessagingException {
@@ -74,37 +77,32 @@ public class EmailService {
         }
     }
 
-    // Optional: Create HTML admin notification if you prefer
     @Async
-    public void sendAdminHtmlNotification(String to, String userEmail, String activationCode)
-            throws MessagingException {
+    public void sendPasswordResetEmail(String toEmail, String name, String resetToken) throws MessagingException {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
+            String resetLink = frontendResetUrl + "?token=" + resetToken;
+
             Map<String, Object> variables = new HashMap<>();
-            variables.put("username", "Admin");
-            variables.put("userEmail", userEmail);
-            variables.put("activationCode", activationCode);
-            variables.put("activationLink", frontendActivationUrl);
+            variables.put("firstName", name);
+            variables.put("resetLink", resetLink);
+            variables.put("resetToken", resetToken);  // Pass just the token separately
 
             Context context = new Context();
             context.setVariables(variables);
 
-            String htmlContent = templateEngine.process(
-                    "admin_notification",
-                    context
-            );
+            String htmlContent = templateEngine.process("reset_password", context);
 
-            helper.setTo(to);
-            helper.setSubject("New User Registration: " + userEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Password Reset Request");
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            log.info("Admin HTML notification sent to: {}", to);
         } catch (MessagingException e) {
-            log.error("Failed to send admin HTML notification: {}", e.getMessage());
-            // Don't throw, as admin notification is not critical
+            log.error("Failed to send password reset email", e);
+            throw e;
         }
     }
 }

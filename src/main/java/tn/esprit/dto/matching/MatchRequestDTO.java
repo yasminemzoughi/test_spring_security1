@@ -33,6 +33,5 @@ public class MatchRequestDTO {
         private String color;
         private String sex;
         private String description;
-        private Long pet_id;
     }
 }

@@ -27,6 +27,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,9 +42,8 @@ public class AuthenticationService {
 
     @Value("${app.admin.email}")
     private String adminEmail;
-    @Value("${mailing.frontend.activation-url:http://localhost:4200/activate_account}")
-    private String frontendActivationUrl;
-
+    @Value("${mailing.frontend.reset-url:http://localhost:4200/reset-password}")
+    private String frontendResetUrl;
     public void register(RegistrationRequest request) throws MessagingException {
         // Check if email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -216,29 +216,95 @@ public class AuthenticationService {
 
         log.info("User logged out successfully: {}", storedToken.getUser().getEmail());
     }
-
-    public void resetPassword(String tokenValue, String newPassword) {
-        Token token = tokenRepository.findByTokenAndTokenType(tokenValue, TokenTypes.PASSWORD_RESET)
-                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
-
-        if (token.isRevoked() || token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Invalid or expired token");
-        }
-
-        User user = token.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        token.setRevoked(true);
-        tokenRepository.save(token);
-    }
-
     @Scheduled(cron = "0 0 3 * * ?")
     public void cleanupExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
         List<Token> expiredTokens = tokenRepository.findAllByExpiresAtBefore(now);
         tokenRepository.deleteAll(expiredTokens);
         log.info("Cleaned up {} expired tokens", expiredTokens.size());
+    }
+
+    public void initiatePasswordReset(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        // Revoke any existing password reset tokens
+        tokenRepository.findAllByUserAndTokenType(user, TokenTypes.PASSWORD_RESET)
+                .forEach(token -> {
+                    token.setRevoked(true);
+                    tokenRepository.save(token);
+                });
+
+        // Generate a random reset token
+        String resetToken = UUID.randomUUID().toString();
+
+        // Save the token
+        Token token = Token.builder()
+                .token(resetToken)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(1)) // 1-hour expiration
+                .revoked(false)
+                .tokenType(TokenTypes.PASSWORD_RESET)
+                .user(user)
+                .build();
+
+        tokenRepository.save(token);
+
+        // Send email with reset link
+        String resetLink = frontendResetUrl + "?token=" + resetToken;
+        emailService.sendPasswordResetEmail(
+                user.getEmail(),
+                user.getFirstName(),
+                resetLink
+        );
+
+        log.info("Password reset initiated for user: {}", email);
+    }
+
+    @Transactional
+    public void resetPassword(String tokenValue, String newPassword) {
+        Token token = tokenRepository.findByTokenAndTokenType(tokenValue, TokenTypes.PASSWORD_RESET)
+                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+
+        if (token.isRevoked()) {
+            throw new RuntimeException("Token has already been used");
+        }
+
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired");
+        }
+
+        User user = token.getUser();
+
+        // Validate new password
+        if (newPassword.length() < 8) {
+            throw new RuntimeException("Password must be at least 8 characters");
+        }
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        // Activate the account if it's not already active
+        if (!user.isEnabled()) {
+            user.setEnabled(true);
+            log.info("Activating account during password reset for user: {}", user.getEmail());
+        }
+
+        userRepository.save(user);
+
+        // Mark token as used
+        token.setRevoked(true);
+        token.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(token);
+
+        // Revoke all login tokens for security
+        tokenRepository.findAllByUserAndTokenType(user, TokenTypes.LOGIN_TOKEN)
+                .forEach(loginToken -> {
+                    loginToken.setRevoked(true);
+                    tokenRepository.save(loginToken);
+                });
+
+        log.info("Password reset successful for user: {}", user.getEmail());
     }
 
 }

@@ -34,3 +34,4 @@ build/
 # Environment files
 application-dev.yml
 user/uploads/
+desc.py

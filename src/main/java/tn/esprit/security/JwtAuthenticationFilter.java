@@ -37,10 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/activate",
             "/api/user/images/**",
            "/api/pets/**",
-            "/swagger-ui/**",          // Add this
-            "/v3/api-docs/**",         // Add this
-            "/swagger-resources/**",    // Add this
-            "/webjars/**");              // Add this);
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password");
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();

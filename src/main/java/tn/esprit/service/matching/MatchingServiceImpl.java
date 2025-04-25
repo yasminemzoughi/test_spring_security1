@@ -83,16 +83,16 @@ public class MatchingServiceImpl implements IMatchingService {
 
         return new MatchRequestDTO(userProfile, petProfiles, topN != null ? topN : 3);
     }
-    @Override
-    public List<Long> getMatchedPetIdsForUser(Long userId, Integer topN) {
-        // Get all matches first
-        MatchResponseDTO matchResponse = matchPetsToUser(userId, topN);
-
-        // Extract pet IDs from the matches
-        return matchResponse.getMatches().stream()
-                .map(match -> match.getPet_id())
-                .collect(Collectors.toList());
-    }
+//    @Override
+//    public List<Long> getMatchedPetIdsForUser(Long userId, Integer topN) {
+//        // Get all matches first
+//        MatchResponseDTO matchResponse = matchPetsToUser(userId, topN);
+//
+//        // Extract pet IDs from the matches
+//        return matchResponse.getMatches().stream()
+//                .map(match -> match.get())
+//                .collect(Collectors.toList());
+//    }
 
 
 
